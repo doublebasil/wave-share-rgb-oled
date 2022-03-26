@@ -1,0 +1,207 @@
+I'll be ignoring the code that allows use of IIC; I'm only looking at the SPI
+code for now
+
+--- Hardware
+Arduino
+	CS	10
+	DC	7
+	RST	8
+SPI:	
+	DIN	11	
+	CLK	13
+
+A few notes - The code uses macros. e.g. OLED_CS is the pin for CS, 
+OLED_CS_0 is a macro for digitalWrite(OLED_CS, 0), etc etc
+
+Another macro it uses is UWORD which becomes unit16_t
+UBYTE uint8_t
+
+#define OLED_1in5_RGB_WIDTH  128 //OLED width
+#define OLED_1in5_RGB_HEIGHT 128 //OLED height
+
+Within GUI_Paint the colors are defined
+#define WHITE          0xFFFF
+#define BLACK          0x0000
+#define BLUE           0x001F
+#define BRED           0XF81F
+#define GRED           0XFFE0
+#define GBLUE          0X07FF
+#define RED            0xF800
+#define MAGENTA        0xF81F
+#define GREEN          0x07E0
+#define CYAN           0x7FFF
+#define YELLOW         0xFFE0
+#define BROWN          0XBC40
+#define BRRED          0XFC07
+#define GRAY           0X8430
+
+
+--- System_Init() :: From DEV_Config
+#include <SPI.h>
+
+// Set some pin modes
+pinMode(OLED_CS, OUTPUT);
+pinMode(OLED_RST, OUTPUT);
+pinMode(OLED_DC, OUTPUT);
+
+SPI.setDataMode(SPI_MODE3);
+SPI.setBitOrder(MSBFIRST);
+SPI.setClockDivider(SPI_CLOCK_DIV2);
+SPI.begin();
+
+--- OLED_1in5_rgb_Init :: from OLED_Driver
+
+// First, it resets the oled by setting the reset pin low
+OLED_RST_1;
+Driver_Delay_ms(100); // Driver_Delay_ms is an overcomplicated way of delay(100)
+OLED_RST_0;
+Driver_Delay_ms(100);
+OLED_RST_1;
+Driver_Delay_ms(100);
+
+// OLED_InitReg():
+// It proceeds to do some black magic that it doesn't explain but oh well
+    OLED_WriteReg(0xfd);  // command lock // These comments are not toms btw
+    OLED_WriteData(0x12);
+    OLED_WriteReg(0xfd);  // command lock
+    OLED_WriteData(0xB1);
+
+    OLED_WriteReg(0xae);  // display off
+    OLED_WriteReg(0xa4);  // Normal Display mode
+
+    OLED_WriteReg(0x15);  //set column address
+    OLED_WriteData(0x00);     //column address start 00
+    OLED_WriteData(0x7f);     //column address end 127
+    OLED_WriteReg(0x75);  //set row address
+    OLED_WriteData(0x00);     //row address start 00
+    OLED_WriteData(0x7f);     //row address end 127    
+
+    OLED_WriteReg(0xB3);
+    OLED_WriteData(0xF1);
+
+    OLED_WriteReg(0xCA);  
+    OLED_WriteData(0x7F);
+
+    OLED_WriteReg(0xa0);  //set re-map & data format
+    OLED_WriteData(0x74);     //Horizontal address increment
+
+    OLED_WriteReg(0xa1);  //set display start line
+    OLED_WriteData(0x00);     //start 00 line
+
+    OLED_WriteReg(0xa2);  //set display offset
+    OLED_WriteData(0x00);
+
+    OLED_WriteReg(0xAB);  
+    OLED_WriteReg(0x01);  
+
+    OLED_WriteReg(0xB4);  
+    OLED_WriteData(0xA0);   
+    OLED_WriteData(0xB5);  
+    OLED_WriteData(0x55);    
+
+    OLED_WriteReg(0xC1);  
+    OLED_WriteData(0xC8); 
+    OLED_WriteData(0x80);
+    OLED_WriteData(0xC0);
+
+    OLED_WriteReg(0xC7);  
+    OLED_WriteData(0x0F);
+
+    OLED_WriteReg(0xB1);  
+    OLED_WriteData(0x32);
+
+    OLED_WriteReg(0xB2);  
+    OLED_WriteData(0xA4);
+    OLED_WriteData(0x00);
+    OLED_WriteData(0x00);
+
+    OLED_WriteReg(0xBB);  
+    OLED_WriteData(0x17);
+
+    OLED_WriteReg(0xB6);
+    OLED_WriteData(0x01);
+
+    OLED_WriteReg(0xBE);
+    OLED_WriteData(0x05);
+
+    OLED_WriteReg(0xA6);
+
+// And what is writeReg I hear you ponder
+static void OLED_WriteReg(uint8_t Reg ){
+OLED_DC_0;
+OLED_CS_0;
+SPI4W_Write_Byte(Reg);
+OLED_CS_1;
+}
+
+// And what is writeData I hear you ask (ngl didn't see that first time)
+static void OLED_WriteData(uint8_t Data)
+    OLED_DC_1; // this line is the only difference between WriteReg and WriteData
+    OLED_CS_0;
+    SPI4W_Write_Byte(Data);
+    OLED_CS_1;
+
+// And what is SPI4W_Write_Byte
+void SPI4W_Write_Byte(uint8_t DATA) { SPI.transfer(DATA); }
+
+// And next thing within OLED_1in5_rgb_Init 
+delay(200);
+// Then it turns on the display with
+OLED_WriteReg(0xAF); // I told you a minute ago what this function does
+
+--- Going back to the ino file :)
+
+delay(500); // I'm sure these rando delays can be altered
+
+--- Now it uses OLED_1in5_rgb_Clear :: OLED_Driver
+
+UWORD i;
+
+OLED_WriteReg(0x15);
+OLED_WriteData(0);
+OLED_WriteData(127);
+OLED_WriteReg(0x75);
+OLED_WriteData(0);
+OLED_WriteData(127);
+// fill!
+OLED_WriteReg(0x5C);
+
+for(i=0; i<OLED_1in5_RGB_WIDTH*OLED_1in5_RGB_HEIGHT*2; i++){
+    OLED_WriteData(0x00);
+}
+
+--- And back to the ino file
+// This bits a brainf
+// It creates a uint8_t pointer but doesn't give it a value
+UBYTE *BlackImage;
+
+// It uses another damned function
+Paint_NewImage(BlackImage, OLED_1in5_RGB_WIDTH, OLED_1in5_RGB_HEIGHT, 270, BLACK);
+// the 270 is the rotation
+
+--- Paint_NewImage :: GUI_Paint
+this function seems to reference a static global variable Paint of type PAINT
+PAINT is a typedef made in GUI_Paint.h, and it has the following attributes:
+
+typedef struct {
+    UBYTE *Image;
+    UWORD Width;
+    UWORD Height;
+    UWORD WidthMemory;
+    UWORD HeightMemory;
+    UWORD Color;
+    UWORD Rotate;
+    UWORD Mirror;
+    UWORD WidthByte;
+    UWORD HeightByte;
+    UWORD Scale;
+} PAINT;
+extern PAINT Paint; // extern may or may not mean that the value is defined in 
+                    // another part of the program? it's kinda global
+                    
+// Looks like the paint variable has been initialised here ready for use by
+// Other painting related functions
+
+
+
+
