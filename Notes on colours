@@ -1,0 +1,47 @@
+The manufacturer gives the following colours 
+
+#define WHITE          0xFFFF
+#define BLACK          0x0000
+#define BLUE           0x001F
+#define BRED           0XF81F
+#define GRED           0XFFE0
+#define GBLUE          0X07FF
+#define RED            0xF800
+#define MAGENTA        0xF81F
+#define GREEN          0x07E0
+#define CYAN           0x7FFF
+#define YELLOW         0xFFE0
+#define BROWN          0XBC40
+#define BRRED          0XFC07
+#define GRAY           0X8430
+
+#define GRAY1 0x03 //Blackest
+#define GRAY2 0x02
+#define GRAY3 0x01 //gray
+#define GRAY4 0x00 //white
+
+It's difficult to see patterns in the colors, but, thanks to stack overflow,
+you can begin to see patterns when converted to 16 bit binary
+
+WHITE                   0xFFFF 1111 1111 1111 1111
+BLACK                   0x0000 0000 0000 0000 0000
+RED                     0xF800 1111 1000 0000 0000
+GREEN                   0x07E0 0000 0111 1111 0000
+BLUE                    0x001F 0000 0000 0001 1111
+
+I'm not convinced some of the colours they provided are correct
+You may not instantly spot a pattern, but if we group the digits differently:
+
+WHITE                   0xFFFF 11111 111111 11111
+BLACK                   0x0000 00000 000000 00000
+RED                     0xF800 11111 000000 00000
+GREEN                   0x07E0 00000 111111 00000
+BLUE                    0x001F 00000 000000 11111
+YELLOW                  
+
+This is a format known as RGB565, 5 bits of color depth to Red and Blue,
+and 6 bits to Green.
+RGB usually has 256 color depth (8 bit), but here
+red and blue have 32 shades and green has 64 shades
+
+Nice!

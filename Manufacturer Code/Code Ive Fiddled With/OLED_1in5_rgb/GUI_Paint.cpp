@@ -243,6 +243,9 @@ void Paint_SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
         return;
     }
     
+    // Serial.print("Paint Scale is "); //TF test, the scale is 65
+    // Serial.println(Paint.Scale);
+
     if(Paint.Scale == 2){
         UDOUBLE Addr = X / 8 + Y * Paint.WidthByte;
         UBYTE Rdata = Paint.Image[Addr];
@@ -250,22 +253,28 @@ void Paint_SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
             Paint.Image[Addr] = Rdata & ~(0x80 >> (X % 8));
         else
             Paint.Image[Addr] = Rdata | (0x80 >> (X % 8));
-    }else if(Paint.Scale == 4){
+    }
+    else if(Paint.Scale == 4){
         UDOUBLE Addr = X / 4 + Y * Paint.WidthByte;
         Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
         UBYTE Rdata = Paint.Image[Addr];
         
         Rdata = Rdata & (~(0xC0 >> ((X % 4)*2)));
         Paint.Image[Addr] = Rdata | ((Color << 6) >> ((X % 4)*2));
-    }else if(Paint.Scale == 16) {
+    }
+    else if(Paint.Scale == 16) {
         UDOUBLE Addr = X / 2 + Y * Paint.WidthByte;
         UBYTE Rdata = Paint.Image[Addr];
         Color = Color % 16;
         Rdata = Rdata & (~(0xf0 >> ((X % 2)*4)));
         Paint.Image[Addr] = Rdata | ((Color << 4) >> ((X % 2)*4));
-    }else if(Paint.Scale == 65) {
+    }
+    else if(Paint.Scale == 65) { // this is the one being triggered
+        Serial.print("Using color - ");
+        Serial.println(Color, HEX);
         OLED_1in5_rgb_Set_Point(X, Y, Color);
     }
+    else Serial.println("None of these happened"); // TF this wasn't necessary because I am big dumb
 }
 
 /******************************************************************************

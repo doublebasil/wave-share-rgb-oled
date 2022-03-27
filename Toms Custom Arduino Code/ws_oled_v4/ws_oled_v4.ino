@@ -26,6 +26,35 @@ void setup() {
     Serial.print(b);
     Serial.println("ms!");
 
+    // DTYPE myColor;
+    // delay(2000);
+    // Serial.println(" --- ");
+    // Serial.println("0xF800 = RED");
+    // myColor = 0xF800;
+    // oled.fill(myColor);
+    // delay(2000);
+    // Serial.println("0x07E0 = GREEN");
+    // myColor = 0x07E0;
+    // oled.fill(myColor);
+    // delay(2000);
+    // Serial.println("0x001F = BLUE");
+    // myColor = 0x001F;
+    // oled.fill(myColor);
+    // delay(2000);
+    // Serial.println("0xFFE0 = GRED");
+    // myColor = 0xFFE0;
+    // oled.fill(myColor);
+    // delay(2000);
+
+    for (int x = 10; x < 20; x++) {
+        for (int y = 10; y < 20; y++) {
+            oled.setPixel(x, y, 0xFFE0);
+        }
+    }
+    oled.setPixel(0, 0, 0xF2);
+
+    // oled.clear();
+
     // pinMode(LED_BUILTIN, OUTPUT);
     // digitalWrite(LED_BUILTIN, HIGH);
     

@@ -20,7 +20,7 @@ uint8_t System_Init(void)
   pinMode(OLED_DC, OUTPUT);
 
   //set Serial
-  Serial.begin(115200);
+  // Serial.begin(115200);
 //   Serial.begin(9600); // TF this made no impact 
 
 #if USE_SPI_4W

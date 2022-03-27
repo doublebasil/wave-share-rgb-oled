@@ -1,17 +1,28 @@
 #include "oled_code.h"
+
 // --- Private class methods
 
-void WaveShareOled::oledWriteReg(uint8_t reg) {
+#ifdef DEBUG_PIN
+void WaveShareOled::DEBUG_ON() {
+    digitalWrite(DEBUG_PIN, HIGH);
+}
+
+void WaveShareOled::DEBUG_OFF() {
+    digitalWrite(DEBUG_PIN, LOW);
+}
+#endif
+
+void WaveShareOled::oledWriteReg(DTYPE reg) {
     digitalWrite(DC, 0);
     digitalWrite(CS, 0);
     SPI.transfer(reg);
     digitalWrite(CS, 1);
 }
 
-void WaveShareOled::oledWriteData(uint8_t data) {
+void WaveShareOled::oledWriteData(DTYPE dataOut) {
     digitalWrite(DC, 1);
     digitalWrite(CS, 0);
-    SPI.transfer(data);
+    SPI.transfer(dataOut);
     digitalWrite(CS, 1);
 }
 
@@ -19,13 +30,35 @@ void WaveShareOled::oledWriteData(uint8_t data) {
 
 WaveShareOled::WaveShareOled() {}
 
+void WaveShareOled::clear(void) {
+    // This code cannot be used for setting the display to any other color
+
+    oledWriteReg(0x15);
+    oledWriteData(0);
+    oledWriteData(127);
+    oledWriteReg(0x75);
+    oledWriteData(0);
+    oledWriteData(127);
+
+    oledWriteReg(0x5C);
+
+    for (uint16_t i = 0; i < displayWidth * displayHeight * 2; i++) {
+        oledWriteData(0x0000);
+    }
+    
+}
+
 int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint16_t displayHeight) {
     // Init Arduino pins
     pinMode(CS, OUTPUT);
     pinMode(RST, OUTPUT);
     pinMode(DC, OUTPUT);
-    // pinMode(DIN, OUTPUT); // There's actually no mention of these in pinMode
-    // pinMode(CLK, OUTPUT); // Perhaps because they're the SPI pins? (yes they are)
+    // DIN and CLK pins don't need to be set to output as they are the SPI pins
+
+    // Debug LED if required
+    #ifdef DEBUG_PIN
+    pinMode(DEBUG_PIN, OUTPUT);
+    #endif
 
     // SPI setup
     SPI.setDataMode(SPI_MODE3);
@@ -33,15 +66,16 @@ int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint
     SPI.setClockDivider(SPI_CLOCK_DIV2);
     SPI.begin();
 
-    // In manufacturer code, serial was started here
-
     // Set object variable values to constructor args
     this->CS = CS;
     this->DC = DC;
     this->RST = RST;
 
-    // // Reset the display by setting the reset pin low
-    // // NTS: Fiddle with the delay times or maybe find a datasheet?
+    this->displayWidth = displayWidth;
+    this->displayHeight = displayHeight;
+
+    // Reset the display by setting the reset pin low
+    // NTS: Fiddle with the delay times or maybe find a datasheet?
     digitalWrite(RST, 1);
     delay(100);
     digitalWrite(RST, 0);
@@ -49,7 +83,7 @@ int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint
     digitalWrite(RST, 1);
     delay(100);
 
-    // // Now for some inexplicable magic from the manufacturer. Comments here are from the manufacturer code
+    // Now for some inexplicable magic from the manufacturer. Comments here are from the manufacturer code
     oledWriteReg(0xFD);  // Command lock
     oledWriteData(0x12);
     oledWriteReg(0xFD);  // Command lock
@@ -116,49 +150,45 @@ int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint
     oledWriteReg(0xA6);
 
     delay(200);
-    // // // End of inexplicable code
+    // End of inexplicable code
 
-    // // // Turn on the display
+    // Turn on the display
     oledWriteReg(0xAF);
 
     delay(500);
 
-    // // The screen is then cleared using this interesting code
+    clear();
+
+    return 0;
+
+}
+
+void WaveShareOled::fill(DTYPE color) {
     oledWriteReg(0x15);
     oledWriteData(0);
     oledWriteData(127);
     oledWriteReg(0x75);
     oledWriteData(0);
     oledWriteData(127);
-    // // fill!
+
     oledWriteReg(0x5C);
 
     for (uint32_t i = 0; i < displayWidth * displayHeight * 2; i++) {
-        oledWriteData(0x00);
+        oledWriteData(color);
     }
+}
 
-
-    // 0 = black
-    // 128 = red
-    // 255 = white
-
-    // for (uint32_t j = 0; j < 256; j += 1) {
-    //     for (uint32_t i = 0; i < displayWidth * displayHeight * 2; i++) {
-    //         oledWriteData(j);
-    //         // delay(10);
-    //     }
-    // }
-
-    for (uint32_t j = 0; j < displayHeight * 2; j += 2) {
-        for (uint32_t i = 0; i < displayWidth * 2; i++) {
-            oledWriteData(j);
-            // delay(10);
-        }
-    }
+void WaveShareOled::setPixel(uint16_t x, uint16_t y, DTYPE color) {
+    oledWriteReg(0x15);
+    oledWriteData(x);
+    oledWriteData(x);
+    oledWriteReg(0x75);
+    oledWriteData(y);
+    oledWriteData(y);
+    // fill!
+    oledWriteReg(0x5C);   
     
-
-
-    // Serial.println("Done");
-
+    oledWriteData(color >> 8); // Don't ask I don't know
+    oledWriteData(color);
 }
 

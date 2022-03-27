@@ -6,6 +6,8 @@
 
 
 void setup() {
+
+  Serial.begin(9600);
     // TF little test here
     // pinMode(11, OUTPUT); // these are optional
     // pinMode(13, OUTPUT); // they make no difference
@@ -34,8 +36,11 @@ void setup() {
     // Serial.print("Drawing:page 1\r\n");
     Serial.println("Drawing Page 1");
     Paint_DrawPoint(20, 20, BLUE, DOT_PIXEL_1X1, DOT_STYLE_DFT);
+    delay(1000);
     Paint_DrawPoint(40, 20, BRED, DOT_PIXEL_2X2, DOT_STYLE_DFT);
+    delay(1000);
     Paint_DrawPoint(60, 20, GRED, DOT_PIXEL_3X3, DOT_STYLE_DFT);
+    while (1) {}
     
     Paint_DrawLine(10, 10, 10, 25, GBLUE, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
     Paint_DrawLine(30, 10, 30, 25, RED, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
