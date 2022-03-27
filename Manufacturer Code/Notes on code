@@ -203,5 +203,22 @@ extern PAINT Paint; // extern may or may not mean that the value is defined in
 // Other painting related functions
 
 
+/// After studying the GUI Paint functions, I have some info
+All the shapes are drawn using a function within OLED Driver using a function
+called 
+void OLED_1in5_rgb_Set_Point(UBYTE Xpoint, UBYTE Ypoint, UWORD Color)
 
+This function shines a light on some of the oled write reg/data lines
+
+    OLED_WriteReg(0x15);    // Maybe here we tell the oled what to anticipate
+    OLED_WriteData(Xpoint); // Here we set the x value
+    OLED_WriteData(Xpoint); // not sure why everything seems to be done twice
+    OLED_WriteReg(0x75);    
+    OLED_WriteData(Ypoint); // Set the y co-ordinate
+    OLED_WriteData(Ypoint);
+    // fill!
+    OLED_WriteReg(0x5C);    // Tell it to anticipate color??
+    
+    OLED_WriteData(Color>>8); // going to need to learn what >> means
+    OLED_WriteData(Color);
 
