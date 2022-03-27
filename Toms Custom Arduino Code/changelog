@@ -1,0 +1,6 @@
+V1 - Tried to make the code using classes. Decided that this is a bad idea
+V2 - Tried to make the code using functions. Decided that this is a bad idea.
+V3 - Realised classes are a good idea but I did some big noob stuff
+     I am now able to fill the screen with a block color (that's progress!)
+V4 - Trying to learn how the color works so I can send an actual image to the
+     screen

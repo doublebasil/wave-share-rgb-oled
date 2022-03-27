@@ -2,25 +2,15 @@
 #include <SPI.h>
 #include <stdint.h>
 
-// int oled_init(char CS, char DC, char RST, char DIN, char CLK, unsigned int displayWidth, unsigned int displayHeight);
+static char CS;
+static char DC;
+static char RST;
+static uint16_t displayWidth;
+static uint16_t displayHeight;
 
-// Function to initialise Arduino and Screen for communication
-// DIN and CLK must be connected to MOSI and SCK pins on the arduino respectively
-// This should be pins 11 and 13 respectively on an Uno or Nano 33 IOT for example
+// Behind-the-scenes functions
+void oledWriteReg(uint8_t reg);
+void oledWriteData(uint8_t data);
 
-class WaveShareOled {
-    private:
-        char CS;
-        char DC;
-        char RST;
-
-        unsigned int displayWidth;
-        unsigned int displayHeight;
-
-        void oledWriteReg(uint8_t reg);
-        void oledWriteData(uint8_t data);
-
-    public:
-        // Constructor
-        WaveShareOled(char CS, char DC, char RST, uint16_t displayWidth, uint16_t displayHeight);
-};
+// User functions
+svoid oledInit(char CS, char DC, char RST, uint16_t displayWidth, uint16_t displayHeight);

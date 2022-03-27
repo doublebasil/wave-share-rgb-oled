@@ -30,6 +30,7 @@ void WaveShareOled::oledWriteData(uint8_t data) {
 // --- Public class methods
 
 WaveShareOled::WaveShareOled(char CS, char DC, char RST, uint16_t displayWidth, uint16_t displayHeight) {
+    
     // Init Arduino pins
     pinMode(CS, OUTPUT);
     pinMode(RST, OUTPUT);
@@ -38,29 +39,22 @@ WaveShareOled::WaveShareOled(char CS, char DC, char RST, uint16_t displayWidth, 
     // pinMode(CLK, OUTPUT); // Perhaps because they're the SPI pins? (yes they are)
 
     // SPI setup
-    // SPI.setDataMode(SPI_MODE3);
-    // SPI.setBitOrder(MSBFIRST);
-    // SPI.setClockDivider(SPI_CLOCK_DIV2);
-    // SPI.begin();
+    SPI.setDataMode(SPI_MODE3);
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setClockDivider(SPI_CLOCK_DIV2);
+    SPI.begin();
 
-    // !!! YOU MAY NEED TO START SERIAL HERE ???
-    // Serial.begin(9600);
-    // Serial.println("Serial was began!");
-    // delay(200);
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
+    // In manufacturer code, serial was started here
 
     // Set object variable values to constructor args
-    // this->CS = CS;
-    // this->DC = DC;
-    // this->RST = RST;
-    // this->DIN = DIN;
-    // this->CLK = CLK;
+    this->CS = CS;
+    this->DC = DC;
+    this->RST = RST;
 
     // // Reset the display by setting the reset pin low
     // // NTS: Fiddle with the delay times or maybe find a datasheet?
-    // digitalWrite(RST, 1);
-    // delay(100);
+    digitalWrite(RST, 1);
+    delay(100);
     // digitalWrite(RST, 0);
     // delay(100);
     // digitalWrite(RST, 1);

@@ -10,11 +10,13 @@
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
 
-WaveShareOled oled = WaveShareOled(CS_PIN, DC_PIN, RST_PIN, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
 void setup() {
-    Serial.begin(9600);
-    Serial.println("Made it to setup :)");
+    oledInit(CS_PIN, DC_PIN, RST_PIN, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+
+
+    // Serial.begin(9600);
+    // Serial.println("Back to ino");
 
     // pinMode(LED_BUILTIN, OUTPUT);
     // digitalWrite(LED_BUILTIN, HIGH);
