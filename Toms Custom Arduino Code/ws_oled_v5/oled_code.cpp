@@ -12,14 +12,14 @@ void WaveShareOled::DEBUG_OFF() {
 }
 #endif
 
-void WaveShareOled::oledWriteReg(DTYPE reg) {
+void WaveShareOled::oledWriteReg(uint8_t reg) {
     digitalWrite(DC, 0);
     digitalWrite(CS, 0);
     SPI.transfer(reg);
     digitalWrite(CS, 1);
 }
 
-void WaveShareOled::oledWriteData(DTYPE dataOut) {
+void WaveShareOled::oledWriteData(uint8_t dataOut) {
     digitalWrite(DC, 1);
     digitalWrite(CS, 0);
     SPI.transfer(dataOut);
@@ -163,22 +163,22 @@ int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint
 
 }
 
-void WaveShareOled::fill(DTYPE color) {
-    oledWriteReg(0x15);
-    oledWriteData(0);
-    oledWriteData(127);
-    oledWriteReg(0x75);
-    oledWriteData(0);
-    oledWriteData(127);
+// void WaveShareOled::fill(DTYPE color) {
+//     oledWriteReg(0x15);
+//     oledWriteData(0);
+//     oledWriteData(127);
+//     oledWriteReg(0x75);
+//     oledWriteData(0);
+//     oledWriteData(127);
 
-    oledWriteReg(0x5C);
+//     oledWriteReg(0x5C);
 
-    for (uint32_t i = 0; i < displayWidth * displayHeight * 2; i++) {
-        oledWriteData(color);
-    }
-}
+//     for (uint32_t i = 0; i < displayWidth * displayHeight * 2; i++) {
+//         oledWriteData(color);
+//     }
+// }
 
-void WaveShareOled::setPixel(uint16_t x, uint16_t y, DTYPE color) {
+void WaveShareOled::setPixel(uint16_t x, uint16_t y, uint16_t color) {
     oledWriteReg(0x15);
     oledWriteData(x);
     oledWriteData(x);
@@ -188,7 +188,8 @@ void WaveShareOled::setPixel(uint16_t x, uint16_t y, DTYPE color) {
     // fill!
     oledWriteReg(0x5C);   
     
-    oledWriteData(color >> 8); // Don't ask I don't know
+    // The 16 bits are sent in two seperate bytes
+    oledWriteData(color >> 8);
     oledWriteData(color);
 }
 
