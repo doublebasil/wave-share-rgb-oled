@@ -1,12 +1,12 @@
 #include "oled_code.h"
-#include "image.h"
+//#include "image.h"
 
 // Pins for oled screen
 #define CS_PIN 10
 #define DC_PIN 7
 #define RST_PIN 8
-#define DIN_PIN 11
-#define CLK_PIN 13
+//#define DIN_PIN 11
+//#define CLK_PIN 13
 
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
@@ -27,17 +27,17 @@ void setup() {
     Serial.print(b);
     Serial.println("ms!");
 
-    for (uint32_t i; i < (128 * 128); i++) {
-        oled.setPixel(i % 128, (i - (i % 128)) / 128, imageData[i]);
-    }
+//    for (uint32_t i; i < (128 * 128); i++) {
+//        oled.setPixel(i % 128, (i - (i % 128)) / 128, imageData[i]);
+//    }
 
 
-    // for (int x = 10; x < 20; x++) {
-    //     for (int y = 10; y < 20; y++) {
-    //         oled.setPixel(x, y, 0xFFE0);
-    //     }
-    // }
-    // oled.setPixel(0, 0, 0xF2);
+     for (int x = 10; x < 50; x++) {
+         for (int y = 10; y < 50; y++) {
+             oled.setPixel(x, y, 0xFFE0);
+         }
+     }
+     oled.setPixel(0, 0, 0xF2);
 
 
     // DTYPE myColor;

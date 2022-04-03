@@ -192,4 +192,3 @@ void WaveShareOled::setPixel(uint16_t x, uint16_t y, uint16_t color) {
     oledWriteData(color >> 8);
     oledWriteData(color);
 }
-
