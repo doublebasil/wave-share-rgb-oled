@@ -116,9 +116,6 @@ def encode(huffmanTable, imageData):
                 # Add the binary to the buffer in reverse order
                 # buffer += row[0][::-1]
                 buffer = buffer + row[0]
-                print(str(pixel) + " -> " + str(row[0]))
-                print(buffer)
-                print(" --- ")
                 break
         # Check if the buffer has more than 2 bytes of data
         bufferLength = len(buffer)
@@ -127,7 +124,6 @@ def encode(huffmanTable, imageData):
             first16Bits = buffer[:16]
             buffer = buffer[16:]
             # Now turn the 16 bit binary into 4 digit hex
-            print(len(first16Bits))
             hexValue = hex(int(first16Bits, 2))
             # Ensure hexValue is four digit, e.g. '0x1234'
             while len(hexValue) < 6: 
@@ -166,7 +162,6 @@ def _decode(huffmanTable, encodedImage, dataLength):
                     # Check that the binary string in this row is the correct length
                     if len(row[0]) == currentCheckSize:
                         # Check that we have found a binary pattern in within the buffer
-                        bufferLength = len(buffer)
                         if buffer[0:currentCheckSize] == row[0]:
                             # Code has matched a binary string
                             decodedData.append(row[1])
