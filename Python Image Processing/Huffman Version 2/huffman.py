@@ -108,32 +108,39 @@ def createTable(data):
 def encode(huffmanTable, imageData):
     encodedImage = []
     buffer = ""
+    # For each pixel in the image
     for pixel in imageData:
         # Find that pixel in huffmanTable
         for row in huffmanTable:
             if row[1] == pixel:
-                buffer = row[0] + buffer
+                # Add the binary to the buffer in reverse order
+                # buffer += row[0][::-1]
+                buffer = buffer + row[0]
+                print(str(pixel) + " -> " + str(row[0]))
+                print(buffer)
+                print(" --- ")
                 break
         # Check if the buffer has more than 2 bytes of data
         bufferLength = len(buffer)
         if bufferLength >= 16:
-            # Remove the last 16 bits from the buffer
-            last16Bits = buffer[bufferLength - 16 : bufferLength]
-            buffer = buffer[0 : bufferLength - 16]
+            # Remove the leftmost 16 bits from the buffer
+            first16Bits = buffer[:16]
+            buffer = buffer[16:]
             # Now turn the 16 bit binary into 4 digit hex
-            hexValue = hex(int(last16Bits, 2))
+            print(len(first16Bits))
+            hexValue = hex(int(first16Bits, 2))
             # Ensure hexValue is four digit, e.g. '0x1234'
             while len(hexValue) < 6: 
                 hexValue = "0x0" + hexValue[2:]
             # Add the hex value to the encoded image data
             encodedImage.append(hexValue)
     # We are now left with less than 16 bits, turn this into 4 digit hex
+    while len(buffer) < 16: buffer = buffer + "0"
     hexValue = hex(int(buffer, 2))
     while len(hexValue) < 6: 
         hexValue = "0x0" + hexValue[2:]
     encodedImage.append(hexValue)
     # Now return the encoded image
-    print(encodedImage)
     return encodedImage
 
 
@@ -157,28 +164,29 @@ def _decode(huffmanTable, encodedImage, dataLength):
         # Ensure the binary number is 16 'bits' long
         while len(binary) < 16: binary = "0" + binary
         # Add the binary number to the buffer
-        buffer = binary + buffer
+        buffer = buffer + binary
         print("Adding a new byte")
         # Keep finding strings of binary from the huffman table
         while True:
             foundString = False
-            while currentCheckSize <= len(buffer):
+            while currentCheckSize <= len(buffer) and itemsFound < dataLength:
                 # Check if our currentCheckSize matches anything in the huffman table
                 for row in huffmanTable:
                     # Check that the binary string in this row is the correct length
                     if len(row[0]) == currentCheckSize:
 
                         print("Checking " + str(buffer) + " against " + str(row) + ", currentCheckSize = " + str(currentCheckSize))
+                        print("Currently found " + str(itemsFound) + " out of " + str(dataLength) + " items")
 
                         # Check that we have found a binary pattern in within the buffer
                         bufferLength = len(buffer)
-                        if buffer[bufferLength-currentCheckSize : bufferLength] == row[0]:
+                        if buffer[0:currentCheckSize] == row[0]:
 
                             print("That's a match!")
 
                             # Code has matched a binary string
-                            buffer = buffer[0 : bufferLength - currentCheckSize]
                             decodedData.append(row[1])
+                            buffer = buffer[currentCheckSize:]
                             foundString = True
                             currentCheckSize = 1
                             itemsFound += 1

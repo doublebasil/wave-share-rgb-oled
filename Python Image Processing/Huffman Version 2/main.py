@@ -10,13 +10,25 @@ def main():
 
     # hTable = huffman.createTable(imageData)
 
-    encodeTestString = "this is a to test the thing"
+    # encodeTestString = "this is a to test the thing"
+    encodeTestString = "why would you want to become a programmer?"
     encodeTestCharArray = []
     for ch in encodeTestString:
         encodeTestCharArray.append(ch)
     hTable = huffman.createTable(encodeTestCharArray)
-    print(hTable)
     encodedImage = huffman.encode(hTable, encodeTestCharArray)
+
+    print(encodeTestString)
+    print(encodedImage)
+    print(hTable)
+
+    binaryString = ""
+    for byte in encodedImage:
+        binaryTemp = bin(int(byte, 16))[2:]
+        while len(binaryTemp) < 16: binaryTemp = "0" + binaryTemp
+        binaryString += binaryTemp
+    print(binaryString)
+
     decodedImage = huffman._decode(hTable, encodedImage, len(encodeTestString))
     print(decodedImage)
 
