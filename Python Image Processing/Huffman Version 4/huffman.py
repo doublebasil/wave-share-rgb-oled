@@ -1,4 +1,5 @@
 from math import pow
+from progressBar import progressBar
 
 """
 This code can be used to create a huffman table for datasets, it is currently
@@ -7,11 +8,15 @@ setup to encode a char array
 Note that for smaller datasets there are multiple possible huffman trees
 """
 
+VERBOSE = True
+
 def createTable(data):
     # Creating two 1D arrays for item and item-frequency
     dataValue = []
     dataFreq = []
+
     # Fill the item-frequency arrays using input variable 'data'
+    if VERBOSE: print("Creating item frequency array")
     for item in data:
         # If we haven't seen that value before, create a new place for it in the list
         if not item in dataValue:
@@ -31,6 +36,7 @@ def createTable(data):
         valueFrequency.append([dataFreq[index], dataValue[index]])
 
     # Now build the Huffman tree using big brain loop
+    if VERBOSE: print("Building Huffman tree as list")
     # While valueFrequency has a height > 1, there is still more combining to do
     while len(valueFrequency) > 1:
         # Sort the list by the first column (the frequency column)
@@ -42,12 +48,16 @@ def createTable(data):
         valueFrequency.pop(0)
         # And add the new item to the list
         valueFrequency.append(newItem)
-    
+
     # We now have an array that represents the huffman tree
     huffmanArray = valueFrequency[0][1]
     # You could find the char represented by 10101 using huffmanArray[1][0][1][0][1] for example
 
     # Turn the huffmanArray into a table that shows what each binary number represents
+    if VERBOSE: 
+        print("Converting Huffman tree list into table")
+        progBar1 = progressBar()
+        progBar1.display(0, len(dataValue))
     huffmanTableBinary = []
     huffmanTableValue = []
     # Variable to remember current number of binary digits (1, 2, 3 etc)
@@ -88,10 +98,13 @@ def createTable(data):
                 # If it is not a list, we have found the end of a branch on the Huffman tree
                 huffmanTableBinary.append(binaryNum)
                 huffmanTableValue.append(target)
+                # Update progress bar
+                progBar1.display(len(huffmanTableValue), len(dataValue))
                 # If we have found all items on the tree, break the while loop
                 if len(huffmanTableValue) == len(dataValue):
                     # We have built the tree
                     finished = True
+                    progBar1.finish()
                     break
 
         numberOfDigits += 1

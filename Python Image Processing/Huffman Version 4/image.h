@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+// Encoded data for the image 
+
 uint16_t dataBatch0[] = {0xaaaa, 0xaaaa, 0xaaaa, 0xaaa9, 
 	0x6595, 0x25af, 0x67a6, 0x785f, 
 	0x531f, 0x5317, 0xf7f7, 0xf7ee, 
@@ -2116,3 +2118,44 @@ uint16_t dataBatch150[] = {0x31b6, 0xdb6d, 0xb6db, 0x6db6,
 
 uint16_t dataBatch151[] = {0xb6db, 0x6db0};
 
+// Array of pointers 
+
+uint16_t* dataPointers[] = {&dataBatch0, &dataBatch1, &dataBatch2, &dataBatch3, 
+	&dataBatch4, &dataBatch5, &dataBatch6, &dataBatch7, 
+	&dataBatch8, &dataBatch9, &dataBatch10, &dataBatch11, 
+	&dataBatch12, &dataBatch13, &dataBatch14, &dataBatch15, 
+	&dataBatch16, &dataBatch17, &dataBatch18, &dataBatch19, 
+	&dataBatch20, &dataBatch21, &dataBatch22, &dataBatch23, 
+	&dataBatch24, &dataBatch25, &dataBatch26, &dataBatch27, 
+	&dataBatch28, &dataBatch29, &dataBatch30, &dataBatch31, 
+	&dataBatch32, &dataBatch33, &dataBatch34, &dataBatch35, 
+	&dataBatch36, &dataBatch37, &dataBatch38, &dataBatch39, 
+	&dataBatch40, &dataBatch41, &dataBatch42, &dataBatch43, 
+	&dataBatch44, &dataBatch45, &dataBatch46, &dataBatch47, 
+	&dataBatch48, &dataBatch49, &dataBatch50, &dataBatch51, 
+	&dataBatch52, &dataBatch53, &dataBatch54, &dataBatch55, 
+	&dataBatch56, &dataBatch57, &dataBatch58, &dataBatch59, 
+	&dataBatch60, &dataBatch61, &dataBatch62, &dataBatch63, 
+	&dataBatch64, &dataBatch65, &dataBatch66, &dataBatch67, 
+	&dataBatch68, &dataBatch69, &dataBatch70, &dataBatch71, 
+	&dataBatch72, &dataBatch73, &dataBatch74, &dataBatch75, 
+	&dataBatch76, &dataBatch77, &dataBatch78, &dataBatch79, 
+	&dataBatch80, &dataBatch81, &dataBatch82, &dataBatch83, 
+	&dataBatch84, &dataBatch85, &dataBatch86, &dataBatch87, 
+	&dataBatch88, &dataBatch89, &dataBatch90, &dataBatch91, 
+	&dataBatch92, &dataBatch93, &dataBatch94, &dataBatch95, 
+	&dataBatch96, &dataBatch97, &dataBatch98, &dataBatch99, 
+	&dataBatch100, &dataBatch101, &dataBatch102, &dataBatch103, 
+	&dataBatch104, &dataBatch105, &dataBatch106, &dataBatch107, 
+	&dataBatch108, &dataBatch109, &dataBatch110, &dataBatch111, 
+	&dataBatch112, &dataBatch113, &dataBatch114, &dataBatch115, 
+	&dataBatch116, &dataBatch117, &dataBatch118, &dataBatch119, 
+	&dataBatch120, &dataBatch121, &dataBatch122, &dataBatch123, 
+	&dataBatch124, &dataBatch125, &dataBatch126, &dataBatch127, 
+	&dataBatch128, &dataBatch129, &dataBatch130, &dataBatch131, 
+	&dataBatch132, &dataBatch133, &dataBatch134, &dataBatch135, 
+	&dataBatch136, &dataBatch137, &dataBatch138, &dataBatch139, 
+	&dataBatch140, &dataBatch141, &dataBatch142, &dataBatch143, 
+	&dataBatch144, &dataBatch145, &dataBatch146, &dataBatch147, 
+	&dataBatch148, &dataBatch149, &dataBatch150, &dataBatch151
+	};
