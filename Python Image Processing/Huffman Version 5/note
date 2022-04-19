@@ -1,0 +1,8 @@
+We've got an array containg some pointers, some pointers to pointers, and some pointers to pointers to pointer
+and that is messy. I think we can reduce this to 3 arrays:
+1) Number of each binary size we have, so for the above table, [0, 3, 2]?
+2) All the binary numbers we have, so for the above table: [000111100101]
+                                                            XX  XX   XXX
+3) The values of each binary code in order that they occur in the above array [12, 5, 3, 1, 2]
+
+Huffman Version 5 should implement this
