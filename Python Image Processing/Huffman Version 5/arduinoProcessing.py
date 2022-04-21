@@ -40,7 +40,9 @@ def generateHeaderFile(huffmanTable, encodedData):
     # Check if there is already a file called 'image.h'
     if 'image.h' in fileList:
         # Ask the user if it can be deleted
-        uinput = input("A file called 'image.h' already exists.\nType 'y' to overwrite it: ")
+        # uinput = input("A file called 'image.h' already exists.\nType 'y' to overwrite it: ")
+        print("A file called 'image.h' already exists.\nType 'y' to overwrite it: y")
+        uinput = "y"
         if str(uinput) == "y":
             os.system('gio trash image.h')
         else:
@@ -123,11 +125,38 @@ def generateHeaderFile(huffmanTable, encodedData):
             writeCounter -= 1
             if writeCounter > 0:
                 file.write(", ")
-            if newLineCounter == BYTES_PER_LINE:
+            if newLineCounter >= BYTES_PER_LINE:
                 file.write("\n\t")
                 newLineCounter = 0
-        file.write("}\n\n")
+        file.write("};\n\n")
         # --- Array 2 of 3 - All of the Huffman codes in a long list
+        # Smallest first, group into 16 bits
+        # For speed, maybe group into multiple arrays based on size?
+        # Not great when most of the codes are the same size haha
+        file.write("uint16_t array2Idk = {")
+        newLineCounter = 0
+        # writeCounter = 0
+        writeBuffer = ""
+        for row in huffmanTable:
+            writeBuffer = writeBuffer + row[0]
+            if len(writeBuffer) > 16:
+                newByte = hex(int(writeBuffer[0:15], 2))
+                writeBuffer =  writeBuffer[15:]
+                # Force the hex to be 4 digits long
+                while len(newByte) < 6:
+                    newByte = "0x0" + newByte[2:]
+                file.write(newByte + ", ")
+                newLineCounter += 1
+                # writeCounter += 1
+                if newLineCounter >= BYTES_PER_LINE:
+                    file.write("\n\t")
+                    newLineCounter = 0
+        # Code always leaves data to write without a comma
+        while len(writeBuffer) < 16:
+            writeBuffer = writeBuffer + "0"
+        file.write(hex(int(writeBuffer, 2)))
+        file.write("};\n\n")
 
-        
+
+
 
