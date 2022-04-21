@@ -133,6 +133,7 @@ def generateHeaderFile(huffmanTable, encodedData):
         # Smallest first, group into 16 bits
         # For speed, maybe group into multiple arrays based on size?
         # Not great when most of the codes are the same size haha
+        # THIS NEEDS TO BE SPLIT INTO BATCHES THAT FIT INTO RAM
         array2Length = 0
         for row in huffmanTable:
             array2Length += len(row[0])
@@ -161,8 +162,21 @@ def generateHeaderFile(huffmanTable, encodedData):
             writeBuffer = writeBuffer + "0"
         file.write(hex(int(writeBuffer, 2)))
         file.write("};\n\n")
-
-        print(huffmanTable)
+        # --- Array 3 of 3 - The values corresponding to each Huffman code
+        file.write("uint16_t array3Thing[] = {")
+        newLineCounter = 0
+        commaCounter = len(huffmanTable)
+        for row in huffmanTable:
+            file.write(row[1])
+            newLineCounter += 1
+            commaCounter -= 1
+            if commaCounter > 0:
+                file.write(", ")
+            if newLineCounter == BYTES_PER_LINE:
+                file.write("\n\t")
+                newLineCounter = 0
+        file.write("};\n\n")
+            
 
 
 
