@@ -1,3 +1,4 @@
+from asyncio.base_futures import _FINISHED
 import os
 from math import ceil
 
@@ -28,8 +29,8 @@ def generateHeaderFile(huffmanTable, encodedData):
             binCodeLenFreq.append(0)
             currentLength += 1
         binCodeLenFreq[currentLength-1] += 1
-    print(huffmanTable)
-    print(binCodeLenFreq)
+    # print(huffmanTable)
+    # print(binCodeLenFreq)
 
     # Now code for actually making the header file
     # Get length of encodedData
@@ -51,7 +52,7 @@ def generateHeaderFile(huffmanTable, encodedData):
         # Add comment
         file.write("// Encoded data for the image \n\n")
 
-        # Gonna struggle to comment this shit
+        # Gonna struggle to comment this junk
         numberOfBatches = ceil(len(encodedData) / BYTES_PER_BATCH)
         bytesInLastBatch = len(encodedData) % BYTES_PER_BATCH
         for batchNumber in range(0, numberOfBatches):
@@ -102,7 +103,31 @@ def generateHeaderFile(huffmanTable, encodedData):
                 file.write("\n\t")
                 newLineCounter = 0
         # End the array
-        file.write("};")
+        file.write("};\n\n")
 
         # Now need to add the Huffman Table
+        file.write("// Data for Huffman table \n\n")
+        # --- Array 1 of 3 --- The frequency of each length of binary number something or other this needs rewording
+        # Get data type for array 1 (almost always uint16_t)
+        bitSizeForArray1 = ceil(int.bit_length(max(binCodeLenFreq)) / 8) * 8
+        dataTypeArray1 = "uint" + str(bitSizeForArray1) + "_t"
+        # Add max binary code size, for c to know the array length
+        file.write(dataTypeArray1 + "maxBinCodeSize = " + str(len(binCodeLenFreq)) + ";\n")
+        # Add frequency of each binary code size
+        file.write("binCodeSizes = {")
+        newLineCounter = 0                  # For placing new lines
+        writeCounter = len(binCodeLenFreq)  # For placing commas
+        for codeSize in binCodeLenFreq:
+            file.write(str(codeSize))
+            newLineCounter += 1
+            writeCounter -= 1
+            if writeCounter > 0:
+                file.write(", ")
+            if newLineCounter == BYTES_PER_LINE:
+                file.write("\n\t")
+                newLineCounter = 0
+        file.write("}\n\n")
+        # --- Array 2 of 3 - All of the Huffman codes in a long list
+
+        
 
