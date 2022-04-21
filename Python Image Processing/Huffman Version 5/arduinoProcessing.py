@@ -114,9 +114,9 @@ def generateHeaderFile(huffmanTable, encodedData):
         bitSizeForArray1 = ceil(int.bit_length(max(binCodeLenFreq)) / 8) * 8
         dataTypeArray1 = "uint" + str(bitSizeForArray1) + "_t"
         # Add max binary code size, for c to know the array length
-        file.write(dataTypeArray1 + "maxBinCodeSize = " + str(len(binCodeLenFreq)) + ";\n")
+        file.write("uint8_t maxBinCodeSize = " + str(len(binCodeLenFreq)) + ";\n")
         # Add frequency of each binary code size
-        file.write("binCodeSizes = {")
+        file.write(dataTypeArray1 + " binCodeSizes[] = {")
         newLineCounter = 0                  # For placing new lines
         writeCounter = len(binCodeLenFreq)  # For placing commas
         for codeSize in binCodeLenFreq:
@@ -133,7 +133,12 @@ def generateHeaderFile(huffmanTable, encodedData):
         # Smallest first, group into 16 bits
         # For speed, maybe group into multiple arrays based on size?
         # Not great when most of the codes are the same size haha
-        file.write("uint16_t array2Idk = {")
+        array2Length = 0
+        for row in huffmanTable:
+            array2Length += len(row[0])
+        array2Length = ceil(array2Length / 16)
+        file.write("uint16_t array2Size = " + str(array2Length) + ";\n")
+        file.write("uint16_t array2Idk[] = {")
         newLineCounter = 0
         # writeCounter = 0
         writeBuffer = ""
@@ -157,6 +162,7 @@ def generateHeaderFile(huffmanTable, encodedData):
         file.write(hex(int(writeBuffer, 2)))
         file.write("};\n\n")
 
+        print(huffmanTable)
 
 
 

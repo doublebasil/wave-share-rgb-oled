@@ -2162,13 +2162,14 @@ uint16_t* dataPointers[] = {&dataBatch0[0], &dataBatch1[0], &dataBatch2[0], &dat
 
 // Data for Huffman table 
 
-uint16_tmaxBinCodeSize = 14;
-binCodeSizes = {0, 0, 2, 1, 
+uint8_t maxBinCodeSize = 14;
+uint16_t binCodeSizes[] = {0, 0, 2, 1, 
 	0, 4, 9, 33, 
 	58, 117, 180, 268, 
 	174, 388};
 
-uint16_t array2Idk = {0x2d45, 0x1866, 0x2801, 0x6306, 
+uint16_t array2Size = 934;
+uint16_t array2Idk[] = {0x2d45, 0x1866, 0x2801, 0x6306, 
 	0x4d5b, 0x5cc9, 0x5803, 0x020d, 
 	0x4788, 0x2444, 0x32d2, 0x7191, 
 	0x59a1, 0x62e8, 0x7577, 0x48cc, 
