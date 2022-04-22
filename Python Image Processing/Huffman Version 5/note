@@ -6,3 +6,5 @@ and that is messy. I think we can reduce this to 3 arrays:
 3) The values of each binary code in order that they occur in the above array [12, 5, 3, 1, 2]
 
 Huffman Version 5 should implement this
+
+In this version I have also changed arduinoProcessing to use more functions
