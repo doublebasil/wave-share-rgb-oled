@@ -92,6 +92,7 @@ def _writeHuffmanTable(file, huffmanTable):
     # Add variable for length of array (this may need adjusting?)
     file.write("uint16_t maxBinCodeLen = " + str(len(binCodeLenFreq)) + ";\n")
     # Add frequency of each binary code size
+    file.write("// Maybe in future change this to cumulative frequency\n")
     file.write("uint16_t binCodeSizes[] = {")
     newLineCounter = 0                      # For placing new lines
     writesRemaining = len(binCodeLenFreq)   # For placing commas
@@ -128,7 +129,7 @@ def _writeHuffmanTable(file, huffmanTable):
     for row in huffmanTable:
         # Create new array if necessary (this will always happen on the first iteration)
         if newArrayCounter == ELEMENTS_PER_BATCH:
-            # If this isn't the first array, end the last array
+            # If this isn't the first array, end the previous array
             if arraysUsed != 0:
                 file.write("};\n")
             # Start the next array
@@ -173,56 +174,70 @@ def _writeHuffmanTable(file, huffmanTable):
             newLineCounter = 0
     file.write("};\n\n")
 
-    # # Initialise first array
-    # file.write("uint16_t huffInput0[] = {\n\t")
-    # for row in huffmanTable:
-    #     # Add the binary to the end of the buffer
-    #     writeBuffer = writeBuffer + row[0]
-    #     if len(writeBuffer) > 16:
-    #         # Move the first 16 bits from the buffer and write to the header file
-    #         newElement = hex(int(writeBuffer[0:16], 2))
-    #         writeBuffer =  writeBuffer[16:]
-    #         # Ensure newElement has 4 digits, e.g. 0x1234
-    #         while len(newElement) < 6:
-    #             newElement = "0x0" + newElement[2:]
-    #         newLineCounter += 1
-    #         newArrayCounter += 1
-
-
-    #         # THIS WHOLE FOR LOOP COULD DO WITH REWRITING
-    #         # if this is the last element to be written
-    #         elif newArrayCounter == ELEMENTS_PER_BATCH
-    #         file.write(newElement + ", ")
-
-    #         # Add new line if there are enough elements on the current line
-    #         if newLineCounter >= ELEMENTS_PER_LINE:
-    #             file.write("\n\t")
-    #             newLineCounter = 0
-    #         # Start new array if there are enough elements in the current 
-
-    # # NEED TO REWRITE SO THAT THIS ISN'T USED
-    # # Code always leaves one element to write, with no following comma
-    # # Append 0 to the end of the buffer until the buffer has 16 bits
-    # while len(writeBuffer) < 16:
-    #     writeBuffer = writeBuffer + "0"
-    # file.write(hex(int(writeBuffer, 2)))
-    # file.write("};\n\n")
-
     # --- Array 3 of 3 - huffOutput
     # The values corresponding to each Huffman code
-    file.write("uint16_t huffOutput[] = {\n\t")
-    newLineCounter = 0
-    commaCounter = len(huffmanTable)
+    file.write("// Data for array 3\n\n")
+    # Find total number of elements needed
+    huffOutputRequiredElements = len(huffmanTable)
+    # Counters
+    newLineCounter = 0          # For adding new lines
+    newArrayCounter = ELEMENTS_PER_BATCH # For starting a new array. Initial value forces first iteration to create the first array
+    arraysUsed = 0              # For creating the array of pointers
+    totalElementsWritten = 0    # Accross all arrays. Used for comma placement
+    # Add data from the Huffman table
     for row in huffmanTable:
+        # Create a new array if necessary (this will always happen on the first iteration)
+        if newArrayCounter == ELEMENTS_PER_BATCH:
+            # If this isn't the first array, end the previous        
+            if arraysUsed != 0:
+                file.write("};\n")
+            # Start the next array
+            file.write("uint16_t huffOutputData" + str(arraysUsed) + "[] = {\n\t")
+            newArrayCounter = 0 # Reset
+            newLineCounter = 0  # Reset
+            arraysUsed += 1     # Increment
+        # Write the output code to the file
         file.write(row[1])
+        # Increment counters
         newLineCounter += 1
-        commaCounter -= 1
-        if commaCounter > 0:
+        newArrayCounter += 1
+        totalElementsWritten += 1
+        # Add a comma if necessary
+        if (not (totalElementsWritten == (huffOutputRequiredElements)) and (not (newArrayCounter == ELEMENTS_PER_BATCH))):
+            file.write(", ")
+        # Check if new line is required
+        if newLineCounter == ELEMENTS_PER_LINE:
+            file.write("\n\t")
+            newLineCounter = 0
+    # End last array
+    file.write("};\n\n")
+    # Create array of pointers
+    file.write("// Pointers for array 3\n\n")
+    file.write("uint16_t *huffOutput[] = {\n\t")
+    newLineCounter = 0
+    for n in range(0, arraysUsed):
+        file.write("&huffOutputData" + str(n) + "[0]")
+        newLineCounter += 1
+        if n != (arraysUsed - 1):
             file.write(", ")
         if newLineCounter == ELEMENTS_PER_LINE:
             file.write("\n\t")
             newLineCounter = 0
     file.write("};\n\n")
+
+    # file.write("uint16_t huffOutput[] = {\n\t")
+    # newLineCounter = 0
+    # commaCounter = len(huffmanTable)
+    # for row in huffmanTable:
+    #     file.write(row[1])
+    #     newLineCounter += 1
+    #     commaCounter -= 1
+    #     if commaCounter > 0:
+    #         file.write(", ")
+    #     if newLineCounter == ELEMENTS_PER_LINE:
+    #         file.write("\n\t")
+    #         newLineCounter = 0
+    # file.write("};\n\n")
 
 
 def generateHeaderFile(huffmanTable, encodedData):
@@ -244,6 +259,8 @@ def generateHeaderFile(huffmanTable, encodedData):
     with open('image.h', 'w') as file:
         # Add stdint.h to the header file
         file.write("#include <stdint.h>\n\n")
+        # Note the standard array size
+        file.write("#define ARRAY_SIZE " + str(ELEMENTS_PER_BATCH) + "\n\n")
         # Write the encoded data to the header file
         _writeEncodedData(file, encodedData)
         # Write the decoding data to the header file
