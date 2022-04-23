@@ -147,7 +147,7 @@ def _writeHuffmanTable(file, huffmanTable):
             newArrayCounter += 1
             totalElementsWritten += 1
             # Check if comma is required
-            if (not (totalElementsWritten == len(huffmanTable))) or (not (newArrayCounter == ELEMENTS_PER_BATCH)):
+            if (not (totalElementsWritten == len(huffmanTable))) and (not (newArrayCounter == ELEMENTS_PER_BATCH)):
                 file.write(", ")
             # Check if new line is required
             if newLineCounter == ELEMENTS_PER_LINE:
