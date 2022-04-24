@@ -31,13 +31,21 @@ def main():
     # print(decodedImage)
 
 
-    imageData = imageProcessing.getImageData()
+
+    # Ask for oled Width and Height
+    displayWidth = int(input("What is your oled display's width? "))
+    if displayWidth <= 0:
+        exit("Error - invalid display width")
+    displayHeight = int(input("What is your oled display's height? "))
+    if displayHeight <= 0:
+        exit("\nError - invalid display width")
+    imageData = imageProcessing.getImageData(displayWidth, displayHeight)
     print("Raw image uses " + str(len(imageData) * 2) + " bytes")
     hTable = huffman.createTable(imageData)
     print("Encoding image...")
     encodedImage = huffman.encode(hTable, imageData)
     print("Encoded image uses " + str(len(encodedImage) * 2) + " bytes")
-    arduinoProcessing.generateHeaderFile(hTable, encodedImage)
+    arduinoProcessing.generateHeaderFile(hTable, encodedImage, displayWidth, displayHeight)
     print("Generating txt version of Huffman table")
     txtGenerator.generateHuffmanTableTxt(hTable)
     print("Done!")

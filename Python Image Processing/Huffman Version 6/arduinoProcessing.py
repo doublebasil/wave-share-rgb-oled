@@ -3,7 +3,7 @@ from math import ceil
 
 # Some setting constants here
 ELEMENTS_PER_LINE = 4   # This changes how the file is written, no effect on performance
-ELEMENTS_PER_BATCH = 50    # This one will affect perfomance, but I haven't tested yet.
+ELEMENTS_PER_BATCH = 50 # This one will affect perfomance, but I haven't tested yet.
 
 def _writeEncodedData(file, encodedData):
     # Add comment to header file
@@ -58,6 +58,8 @@ def _writeEncodedData(file, encodedData):
             newLineCounter = 0
     # End the array
     file.write("};\n\n")
+    # Note how many arrays were used
+    file.write("const uint16_t ENCODING_ARRAYS_USED = " + str(numberOfBatches) + ";\n")
 
 def _writeHuffmanTable(file, huffmanTable):
     # Some code for storing the Huffman table
@@ -225,22 +227,8 @@ def _writeHuffmanTable(file, huffmanTable):
             newLineCounter = 0
     file.write("};\n\n")
 
-    # file.write("uint16_t huffOutput[] = {\n\t")
-    # newLineCounter = 0
-    # commaCounter = len(huffmanTable)
-    # for row in huffmanTable:
-    #     file.write(row[1])
-    #     newLineCounter += 1
-    #     commaCounter -= 1
-    #     if commaCounter > 0:
-    #         file.write(", ")
-    #     if newLineCounter == ELEMENTS_PER_LINE:
-    #         file.write("\n\t")
-    #         newLineCounter = 0
-    # file.write("};\n\n")
 
-
-def generateHeaderFile(huffmanTable, encodedData):
+def generateHeaderFile(huffmanTable, encodedData, displayWidth, displayHeight):
     # Get length of encodedData
     dataLength = len(encodedData)
     # Get a list of files currently in the directory
@@ -255,12 +243,15 @@ def generateHeaderFile(huffmanTable, encodedData):
             os.system('gio trash image.h')
         else:
             return 1
-    # Create a new header.h file
+    # Create a new header file called image.h
     with open('image.h', 'w') as file:
         # Add stdint.h to the header file
         file.write("#include <stdint.h>\n\n")
         # Note the standard array size
         file.write("#define ARRAY_SIZE " + str(ELEMENTS_PER_BATCH) + "\n\n")
+        # And note the display width and height
+        file.write("#define DISPLAY_WIDTH " + str(displayWidth) + "l\n")
+        file.write("#define DISPLAY_HEIGHT " + str(displayHeight) + "l\n\n")
         # Write the encoded data to the header file
         _writeEncodedData(file, encodedData)
         # Write the decoding data to the header file

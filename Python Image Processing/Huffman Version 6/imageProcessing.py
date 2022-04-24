@@ -15,7 +15,7 @@ convert inputImage.jpg -resize 128x128 -ordered-dither threshold,32,64,32 output
 import os               # For using imagemagick and viewing files
 from PIL import Image   # For opening png to view data
 
-def getImageData():
+def getImageData(displayWidth, displayHeight):
     # Check if imagemagick is installed
     r = os.system('convert -help 1>/dev/null')
     if r == 32512:
@@ -47,13 +47,13 @@ def getImageData():
     if (userInput <= 0) or (userInput > counter):
         exit("\nError - Invalid number")
     
-    # Ask for oled Width and Height
-    displayWidth = int(input("What is your oled display's width? "))
-    if displayWidth <= 0:
-        exit("Error - invalid display width")
-    displayHeight = int(input("What is your oled display's height? "))
-    if displayHeight <= 0:
-        exit("\nError - invalid display width")
+    # # Ask for oled Width and Height
+    # displayWidth = int(input("What is your oled display's width? "))
+    # if displayWidth <= 0:
+    #     exit("Error - invalid display width")
+    # displayHeight = int(input("What is your oled display's height? "))
+    # if displayHeight <= 0:
+    #     exit("\nError - invalid display width")
     
     # Need to create a filename for the temporary image name, this cannot be
     # the same filename as a pre-existing file as this would overwrite
