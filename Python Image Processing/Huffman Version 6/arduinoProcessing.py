@@ -59,7 +59,7 @@ def _writeEncodedData(file, encodedData):
     # End the array
     file.write("};\n\n")
     # Note how many arrays were used
-    file.write("const uint16_t ENCODING_ARRAYS_USED = " + str(numberOfBatches) + ";\n")
+    file.write("uint16_t ENCODING_ARRAYS_USED = " + str(numberOfBatches) + ";\n")
 
 def _writeHuffmanTable(file, huffmanTable):
     # Some code for storing the Huffman table
@@ -248,10 +248,10 @@ def generateHeaderFile(huffmanTable, encodedData, displayWidth, displayHeight):
         # Add stdint.h to the header file
         file.write("#include <stdint.h>\n\n")
         # Note the standard array size
-        file.write("#define ARRAY_SIZE " + str(ELEMENTS_PER_BATCH) + "\n\n")
+        file.write("uint16_t ARRAY_SIZE = " + str(ELEMENTS_PER_BATCH) + ";\n\n")
         # And note the display width and height
-        file.write("#define DISPLAY_WIDTH " + str(displayWidth) + "l\n")
-        file.write("#define DISPLAY_HEIGHT " + str(displayHeight) + "l\n\n")
+        file.write("uint16_t DISPLAY_WIDTH = " + str(displayWidth) + ";\n")
+        file.write("uint16_t DISPLAY_HEIGHT = " + str(displayHeight) + ";\n\n")
         # Write the encoded data to the header file
         _writeEncodedData(file, encodedData)
         # Write the decoding data to the header file

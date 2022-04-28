@@ -1,9 +1,9 @@
 #include <stdint.h>
 
-#define ARRAY_SIZE 50
+uint16_t ARRAY_SIZE = 50;
 
-#define DISPLAY_WIDTH 128l
-#define DISPLAY_HEIGHT 128l
+uint16_t DISPLAY_WIDTH = 128;
+uint16_t DISPLAY_HEIGHT = 128;
 
 // Encoded data for the image 
 
@@ -2166,7 +2166,7 @@ uint16_t* dataPointers[] = {
 	&dataBatch148[0], &dataBatch149[0], &dataBatch150[0], &dataBatch151[0]
 	};
 
-const uint16_t ENCODING_ARRAYS_USED = 152;
+uint16_t ENCODING_ARRAYS_USED = 152;
 // Arrays for Huffman table 
 
 uint16_t maxBinCodeLen = 14;

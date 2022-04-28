@@ -25,7 +25,7 @@ void setup() {
 //     (byte & 0x01 ? '1' : '0')
 
 void printBin(uint64_t num, uint8_t bits) {
-    uint64_t indexor = 1 << (bits - 1);
+    uint64_t indexor = (uint64_t) 1 << (bits - 1);
     // Counter to decide where to put spaces
     uint8_t spaceCounter = bits % 4;
     if (spaceCounter == 0) spaceCounter += 4;
@@ -53,9 +53,20 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint32_t* chec
     cout << endl;
     printf( " bufferActive = %d\n", bufferActive);
     cout << "   check size = " << *checkSize << endl;
+    cout << " --- Press enter --- ";
     cin.ignore();   // Wait for user to press enter
     #endif
 
+    // #include <brainf.h>
+
+    // Keep increasing checkSize until it exceeds the bufferActive size
+    while (checkSize - bufferActive >= 0) {
+        // Check all the codes of this size
+        for (uint16_t codeNumber = 0; codeNumber <= binCodeSizes[*checkSize]; codeNumber++) {
+            
+        }
+
+    }
 
 
 }
@@ -72,7 +83,7 @@ void sendImage() {
         // Increment this pointer to get all data from this array
         for (uint16_t arrayPosition = 0; arrayPosition <= ARRAY_SIZE - 1; arrayPosition++) {
             // Add the next two bytes to the buffer
-            buffer = buffer << 16;
+            buffer = (uint64_t) buffer << 16;
             buffer += *dataPointer;
             bufferActive += 16;
             // Process the buffer NOTE: May also need a 'total pixels printed' kinda variable
@@ -87,19 +98,33 @@ void sendImage() {
 int main() {
     setup();
 
-    // sendImage();
+    sendImage();
+    
 
-    // binary print test
-    printBin(0b111100001010, 12);
-    printf("\n");
-    printBin(0b0111100001010, 13);
-    printf("\n");
-    printBin(0b10111100001010, 14);
-    printf("\n");
-    printBin(0b110111100001010, 15);
-    printf("\n");
-    printBin(0b0110111100001010, 16);
-    printf("\n");
+    // const unsigned char a = 1;
+    // signed char b = 2;
+    // if (a == b) {
+    //     cout << "yes" << endl;
+    // } else {
+    //     cout << "no" << endl;
+    // }
+    
+    // printBin(43690, 16);
+    // cout << endl;
+    // printBin(43690, 64);
+    // cout << endl;
+
+    // // binary print test
+    // printBin(0b111100001010, 12);
+    // printf("\n");
+    // printBin(0b0111100001010, 13);
+    // printf("\n");
+    // printBin(0b10111100001010, 14);
+    // printf("\n");
+    // printBin(0b110111100001010, 15);
+    // printf("\n");
+    // printBin(0b0110111100001010, 16);
+    // printf("\n");
 
     // // test
     // uint64_t buffer = 0b01011;
