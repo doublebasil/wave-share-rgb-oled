@@ -45,7 +45,91 @@ void printBin(uint64_t num, uint8_t bits) {
 
 #define VERBOSE 1
 
-void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint32_t* checkSize) {
+// for testing in main we have getHuffInput(3, 6);
+void getHuffInput(uint16_t codeNumber, uint8_t checkSize) {
+    // If codeNumber = 6 and checkSize = 3, this function will return the 
+    // 7th (6 + 1)th 'input code' with length of 3
+    
+    // Some error testing don't mind me
+    // cout << binCodeSizes[checkSize-1] << endl << endl;
+    if (codeNumber > binCodeSizes[checkSize-1]) {
+        cout << "codeNumber looks to be invalid :/" << "\n";
+        exit(1);
+    }
+
+    // Find what binary digit we want to start at e.g. we want to start at the 76th digit
+    uint32_t wantedDigit = 0;
+    for (uint8_t index = 0; index < (checkSize - 1); index++) {
+        wantedDigit += binCodeSizes[index] * (index + 1);
+        // cout << binCodeSizes[index] << endl;
+    }
+    wantedDigit += codeNumber * checkSize;
+
+    cout << "In total we want to start at this binary digit:" << wantedDigit << "\n";
+
+    // Find where in the data we need to go for this 'wantedDigit'
+    uint16_t pointerIndex = 0;
+    uint16_t elementIndex = 0;
+    while (wantedDigit > ARRAY_SIZE * 16) {
+        pointerIndex++;
+        wantedDigit -= ARRAY_SIZE * 16;
+    }
+    while (wantedDigit > 16) {
+        elementIndex++;
+        wantedDigit -= 16;
+    }
+    cout << "pointerIndex  = " << pointerIndex << "\n";
+    cout << "elementIndex  = " << elementIndex << "\n";
+    cout << "wantedDigit   = " << wantedDigit << "\n";
+
+    // Need to get an indexor kinda variable from wantedDigit
+    uint16_t binaryIndexor = 1;
+    binaryIndexor = (uint16_t) binaryIndexor << (16 - wantedDigit);
+    cout << "binaryIndexor = ";
+    printBin(binaryIndexor, 16);
+    cout << "\n";
+
+    // Now get the digits I guess
+    // Need to obtain checkSize number of digits
+    uint8_t digitsObtained = 0;
+    uint32_t output = 0;
+
+    // Attempt 1
+    uint16_t* ptr = huffInput[pointerIndex];
+    for (int e = 0; e < elementIndex; e++) {
+        ptr++;
+    }
+    cout << "ptr is initially pointing to " << (*ptr) << "\n";
+    while (true) {
+        // Add data to the output
+        output << 1;
+        output += ((*ptr & binaryIndexor) > 1);
+        // Increment digitsObtained
+        digitsObtained++;
+        if (digitsObtained == checkSize) break;
+        // Increment counters related to binary stuff
+        binaryIndexor = (uint16_t) binaryIndexor >> 1;
+        if (binaryIndexor == 0) {
+            binaryIndexor = (uint16_t) 1 << 15;
+            elementIndex++;
+            // If we have ran out of elements in this array, we'll need to use the next one
+            // I GUESS THIS SHOULD WORK THE SAME WAY IF THIS IS THE LAST ARRAY? BECAUSE THAT SHOULDN'T HAPPEN
+            if (elementIndex == ARRAY_SIZE) {
+                pointerIndex++;
+                ptr = huffInput[pointerIndex];
+            }
+            else {
+                ptr++;
+            }
+        }
+    }
+
+    printBin(output, checkSize);
+    cout << "\n";
+
+}
+
+void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* checkSize) {
     #ifdef VERBOSE
     cout << "       buffer = " << *bufferPointer << endl;
     cout << "       buffer = ";
@@ -65,7 +149,6 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint32_t* chec
         for (uint16_t codeNumber = 0; codeNumber <= binCodeSizes[*checkSize]; codeNumber++) {
             
         }
-
     }
 
 
@@ -74,7 +157,7 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint32_t* chec
 void sendImage() {
     // Initialise buffer related variables
     uint64_t buffer = 0;
-    uint32_t checkSize = 1;
+    uint8_t checkSize = 1;
     // Variable to note how many bits of the buffer are currently in use
     uint8_t bufferActive = 0;
     // For each pointer in the encoded pointer array
@@ -98,8 +181,10 @@ void sendImage() {
 int main() {
     setup();
 
-    sendImage();
-    
+    // sendImage();
+
+
+    getHuffInput(3, 6);
 
     // const unsigned char a = 1;
     // signed char b = 2;

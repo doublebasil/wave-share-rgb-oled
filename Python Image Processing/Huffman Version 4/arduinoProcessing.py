@@ -68,7 +68,7 @@ def generateHeaderFile(huffmanTable, encodedData):
         # For each batch, add a pointer to that batch
         for batchNumber in range(0, numberOfBatches):
             # Add a pointer
-            file.write("&dataBatch" + str(batchNumber))
+            file.write("&dataBatch" + str(batchNumber) + "[0]")
             # Increment the newLineCounter
             newLineCounter += 1
             # Add a comma if necessary

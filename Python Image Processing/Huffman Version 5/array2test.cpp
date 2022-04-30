@@ -11,10 +11,10 @@ int main(void) {
     
     cout << "---" << endl;
 
-    cout << "Actual size is " << sizeof(array2Idk) / sizeof(array2Idk[0]) << endl;
-    cout << hex;
-    cout << array2Idk[(sizeof(array2Idk)/sizeof(array2Idk[0]))-2] + " ";
-    cout << array2Idk[(sizeof(array2Idk)/sizeof(array2Idk[0]))-1] << dec << endl;
+    cout << "Actual size of array 2 is " << sizeof(array2Idk) / sizeof(array2Idk[0]) << endl;
+    // cout << hex;
+    // cout << array2Idk[(sizeof(array2Idk)/sizeof(array2Idk[0]))-2] + " ";
+    // cout << array2Idk[(sizeof(array2Idk)/sizeof(array2Idk[0]))-1] << dec << endl;
 
     
     return 0;

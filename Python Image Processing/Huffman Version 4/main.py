@@ -1,6 +1,7 @@
 import huffman
 import imageProcessing
 import arduinoProcessing
+import txtGenerator
 
 def main():
     # imageData = imageProcessing.getImageData()
@@ -37,6 +38,9 @@ def main():
     encodedImage = huffman.encode(hTable, imageData)
     print("Encoded image uses " + str(len(encodedImage) * 2) + " bytes")
     arduinoProcessing.generateHeaderFile(hTable, encodedImage)
+    print("Generating txt version of Huffman table")
+    txtGenerator.generateHuffmanTableTxt(hTable)
+    print("Done!")
 
 if __name__ == '__main__':
     main()

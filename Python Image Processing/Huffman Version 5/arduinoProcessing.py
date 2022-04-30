@@ -2,60 +2,58 @@ import os
 from math import ceil
 
 # Some setting constants here
-BYTES_PER_LINE = 4      # This changes how the file is written, no effect on performance
-BYTES_PER_BATCH = 50    # Greater number here MIGHT increases RAM usage and decrease storage space usage? Idk yet
+ELEMENTS_PER_LINE = 4   # This changes how the file is written, no effect on performance
+ELEMENTS_PER_BATCH = 50    # This one will affect perfomance, but I haven't tested yet.
 
 def _writeEncodedData(file, encodedData):
-    # Add comment
+    # Add comment to header file
     file.write("// Encoded data for the image \n\n")
-    # Gonna struggle to comment this junk
-    numberOfBatches = ceil(len(encodedData) / BYTES_PER_BATCH)
-    bytesInLastBatch = len(encodedData) % BYTES_PER_BATCH
+    # Data is split into many arrays reffered to as batches. Find number of batches required
+    numberOfBatches = ceil(len(encodedData) / ELEMENTS_PER_BATCH)
+    # The last batch will have less elements, find how many elements it will have
+    bytesInFinalBatch = len(encodedData) % ELEMENTS_PER_BATCH
+    # Write each batch
     for batchNumber in range(0, numberOfBatches):
-        file.write("uint16_t dataBatch" + str(batchNumber) + "[] = {")
-        # Add a counter for remembering when to add new lines
-        newLineCounter = 0
-        # Add a pixel counter to know when we have printed all the bytes
-        pixelCounter = 0
-        for b in encodedData[batchNumber * BYTES_PER_BATCH : (batchNumber + 1) * BYTES_PER_BATCH]:
+        # Create a 16 bit unsigned integer array
+        file.write("uint16_t dataBatch" + str(batchNumber) + "[] = {\n\t")
+        newLineCounter = 0  # Add a counter for noting when to add new lines
+        writeCounter = 0    # Add a write counter to know all bytes are written
+        for b in encodedData[batchNumber * ELEMENTS_PER_BATCH : (batchNumber + 1) * ELEMENTS_PER_BATCH]:
             # Write that byte to the header file
             file.write(b)
             # Increment the counters
-            pixelCounter += 1
+            writeCounter += 1
             newLineCounter += 1
-            # If this is our last batch
+            # If this is the last batch to be written
             if batchNumber == numberOfBatches - 1:
-                # If this isn't our last byte then add a comma
-                if pixelCounter != bytesInLastBatch:
+                # If this is not the last element of the batch, add a comma
+                if writeCounter != bytesInFinalBatch:
                     file.write(", ")
+            # If this is not the last batch
             else:
-                # If this isn't our last byte then add a comma
-                if pixelCounter != BYTES_PER_BATCH:
+                # If this is not the last element of the batch, add a comma
+                if writeCounter != ELEMENTS_PER_BATCH:
                     file.write(", ")
-            # Check if we need a new line
-            if newLineCounter >= BYTES_PER_LINE:
+            # Add a new line if there are enough elements on the current line
+            if newLineCounter >= ELEMENTS_PER_LINE:
                 file.write("\n\t")
-                # Reset the new line counter
                 newLineCounter = 0
-        
-        # End the array
-        file.write("};\n\n")
-
-    # Now need to create the array of pointers
-    file.write("// Array of pointers \n\n")
-    file.write("uint16_t* dataPointers[] = {")
-    # Add newLineCounter
+        # End this batch array
+        file.write("};\n")
+    # Create an array of pointers that point to the start of each batch
+    file.write("// Array of pointers to encoded data \n\n")
+    file.write("uint16_t* dataPointers[] = {\n\t")
+    # Counter for noting when to add new lines
     newLineCounter = 0
     # For each batch, add a pointer to that batch
     for batchNumber in range(0, numberOfBatches):
-        # Add a pointer
         file.write("&dataBatch" + str(batchNumber) + "[0]")
-        # Increment the newLineCounter
         newLineCounter += 1
-        # Add a comma if necessary
-        if batchNumber != (numberOfBatches - 1): file.write(", ")
-        # Add a new line if necessary
-        if newLineCounter >= BYTES_PER_LINE: 
+        # Add a comma if this isn't the last pointer
+        if batchNumber != (numberOfBatches - 1):
+            file.write(", ")
+        # Add a new line if there are enough elements on the current line
+        if newLineCounter >= ELEMENTS_PER_LINE: 
             file.write("\n\t")
             newLineCounter = 0
     # End the array
@@ -63,8 +61,7 @@ def _writeEncodedData(file, encodedData):
 
 def _writeHuffmanTable(file, huffmanTable):
     # Some code for storing the Huffman table
-    # My (potentially sub-optimum) method will create 3 arrays to store
-    # the Table data
+    # My (potentially horrendus) method will create 3 arrays to store the table
     # 1 - binCodeLenFreq
     #     Number of each length of binary number in Huffman Code
     # 2 - huffInput
@@ -75,6 +72,8 @@ def _writeHuffmanTable(file, huffmanTable):
     #     corresponding to array 2
 
     # Collect data for array 1 - binCodeLenFreq
+    # e.g. third element will tell you how many codes have 3 binary digits
+    # This loop utilises the codes being in size order within the huffmanTable variable
     binCodeLenFreq = []
     currentLength = 0
     for row in huffmanTable:
@@ -86,67 +85,64 @@ def _writeHuffmanTable(file, huffmanTable):
         binCodeLenFreq[currentLength-1] += 1
 
     # Add comment before code for Huffman Table data
-    file.write("// Data for Huffman table \n\n")
+    file.write("// Arrays for Huffman table \n\n")
 
     # --- Array 1 of 3 --- binCodeLenFreq
-    
-    # This code shouldn't be used
-    # # Get data type for array 1 (almost always uint16_t)
-    # bitSizeForArray1 = ceil(int.bit_length(max(binCodeLenFreq)) / 8) * 8
-    # dataTypeArray1 = "uint" + str(bitSizeForArray1) + "_t"
 
     # Add variable for length of array (this may need adjusting?)
     file.write("uint16_t maxBinCodeLen = " + str(len(binCodeLenFreq)) + ";\n")
     # Add frequency of each binary code size
     file.write("uint16_t binCodeSizes[] = {")
     newLineCounter = 0                  # For placing new lines
-    writeCounter = len(binCodeLenFreq)  # For placing commas
+    writesRemaining = len(binCodeLenFreq)  # For placing commas
     for codeSize in binCodeLenFreq:
         file.write(str(codeSize))
         newLineCounter += 1
-        writeCounter -= 1
-        if writeCounter > 0:
+        writesRemaining -= 1    # Note that this variable decreases
+        if writesRemaining > 0:
             file.write(", ")
-        if newLineCounter >= BYTES_PER_LINE:
+        if newLineCounter >= (ELEMENTS_PER_LINE * 3):
             file.write("\n\t")
             newLineCounter = 0
     file.write("};\n\n")
 
-    # --- Array 2 of 3 - All of the Huffman codes in a long list
-    # Smallest first, group into 16 bits
-    # For speed, maybe group into multiple arrays based on size?
-    # Not great when most of the codes are the same size haha
+    # --- Array 2 of 3 - huffInput 
+    # All of the Huffman codes in a long list, shortest first,
+    # Group into 16 bits for storing in an array
     # THIS NEEDS TO BE SPLIT INTO BATCHES THAT FIT INTO RAM
     array2Length = 0
     for row in huffmanTable:
         array2Length += len(row[0])
     array2Length = ceil(array2Length / 16)
-    file.write("uint16_t array2Size = " + str(array2Length) + ";\n")
-    file.write("uint16_t array2Idk[] = {")
+    file.write("uint16_t huffInputLength = " + str(array2Length) + ";\n")
+    file.write("uint16_t huffInput[] = {")
     newLineCounter = 0
-    # writeCounter = 0
     writeBuffer = ""
     for row in huffmanTable:
         writeBuffer = writeBuffer + row[0]
         if len(writeBuffer) > 16:
-            newByte = hex(int(writeBuffer[0:15], 2))
-            writeBuffer =  writeBuffer[15:]
-            # Force the hex to be 4 digits long
-            while len(newByte) < 6:
-                newByte = "0x0" + newByte[2:]
-            file.write(newByte + ", ")
+            # Move the first 16 bits from the buffer and write to the header file
+            newElement = hex(int(writeBuffer[0:16], 2))
+            writeBuffer =  writeBuffer[16:]
+            # Ensure newElement has 4 digits, e.g. 0x1234
+            while len(newElement) < 6:
+                newElement = "0x0" + newElement[2:]
+            file.write(newElement + ", ")
             newLineCounter += 1
-            # writeCounter += 1
-            if newLineCounter >= BYTES_PER_LINE:
+            # Add new line if there are enough elements on the current line
+            if newLineCounter >= ELEMENTS_PER_LINE:
                 file.write("\n\t")
                 newLineCounter = 0
-    # Code always leaves data to write without a comma
+    # Code always leaves one element to write, with no following comma
+    # Append 0 to the end of the buffer until the buffer has 16 bits
     while len(writeBuffer) < 16:
         writeBuffer = writeBuffer + "0"
     file.write(hex(int(writeBuffer, 2)))
     file.write("};\n\n")
-    # --- Array 3 of 3 - The values corresponding to each Huffman code
-    file.write("uint16_t array3Thing[] = {")
+
+    # --- Array 3 of 3 - huffOutput
+    # The values corresponding to each Huffman code
+    file.write("uint16_t huffOutput[] = {\n\t")
     newLineCounter = 0
     commaCounter = len(huffmanTable)
     for row in huffmanTable:
@@ -155,7 +151,7 @@ def _writeHuffmanTable(file, huffmanTable):
         commaCounter -= 1
         if commaCounter > 0:
             file.write(", ")
-        if newLineCounter == BYTES_PER_LINE:
+        if newLineCounter == ELEMENTS_PER_LINE:
             file.write("\n\t")
             newLineCounter = 0
     file.write("};\n\n")
