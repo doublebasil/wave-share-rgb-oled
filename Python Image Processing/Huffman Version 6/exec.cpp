@@ -43,33 +43,28 @@ void printBin(uint64_t num, uint8_t bits) {
     }
 }
 
-#define VERBOSE 1
-
-// for testing in main we have getHuffInput(3, 6);
-void getHuffInput(uint16_t codeNumber, uint8_t checkSize) {
+void getHuffInput(uint16_t codeNumber, uint8_t checkSize, uint32_t* output) {
     // If codeNumber = 6 and checkSize = 3, this function will return the 
     // 7th (6 + 1)th 'input code' with length of 3
     
     // Some error testing don't mind me
-    // cout << binCodeSizes[checkSize-1] << endl << endl;
-    if (codeNumber > binCodeSizes[checkSize-1]) {
+    if (codeNumber >= binCodeSizes[checkSize-1]) {
         cout << "codeNumber looks to be invalid :/" << "\n";
         exit(1);
     }
-
-    // Find what binary digit we want to start at e.g. we want to start at the 76th digit
+    // Find what binary digit we want to start at e.g. The code we want might start at the 76th binary digit
     uint32_t wantedDigit = 0;
     for (uint8_t index = 0; index < (checkSize - 1); index++) {
         wantedDigit += binCodeSizes[index] * (index + 1);
         // cout << binCodeSizes[index] << endl;
     }
     wantedDigit += codeNumber * checkSize;
-
-    cout << "In total we want to start at this binary digit:" << wantedDigit << "\n";
-
-    // Find where in the data we need to go for this 'wantedDigit'
-    uint16_t pointerIndex = 0;
-    uint16_t elementIndex = 0;
+    wantedDigit++;
+    // The data is stored in 16 bit elements within arrays
+    uint16_t pointerIndex = 0;  // Which array is needed
+    uint16_t elementIndex = 0;  // Which element within the array is needed
+    // wantedDigit is the digit within the element that's needed
+    // Use wantedDigit to find which array and which element is needed
     while (wantedDigit > ARRAY_SIZE * 16) {
         pointerIndex++;
         wantedDigit -= ARRAY_SIZE * 16;
@@ -78,56 +73,56 @@ void getHuffInput(uint16_t codeNumber, uint8_t checkSize) {
         elementIndex++;
         wantedDigit -= 16;
     }
-    cout << "pointerIndex  = " << pointerIndex << "\n";
-    cout << "elementIndex  = " << elementIndex << "\n";
-    cout << "wantedDigit   = " << wantedDigit << "\n";
-
-    // Need to get an indexor kinda variable from wantedDigit
+    // Use wanted digits to create a 'binaryIndexor' variable
+    // e.g. if wantedDigit = 3, binaryIndexor = 0010 0000 0000 0000
     uint16_t binaryIndexor = 1;
     binaryIndexor = (uint16_t) binaryIndexor << (16 - wantedDigit);
-    cout << "binaryIndexor = ";
-    printBin(binaryIndexor, 16);
-    cout << "\n";
-
-    // Now get the digits I guess
-    // Need to obtain checkSize number of digits
+    // Now use the binaryIndexor, elementIndex and pointerIndex to get each binary digit from the code, one by one
+    // NOTE: YOU SHOULD IMPLEMENT A MORE EFFICIENT METHOD WHERE THE DIGITS ARE OBTAINED IN GROUPS, NOT ONE AT A TIME
+    // Variable to to know when we have found enough digits
     uint8_t digitsObtained = 0;
-    uint32_t output = 0;
-
-    // Attempt 1
+    // // The function's output variable
+    // uint32_t output = 0;
+    // Create a pointer and increment it to the element that is needed
     uint16_t* ptr = huffInput[pointerIndex];
-    for (int e = 0; e < elementIndex; e++) {
+    for (int i = 0; i < elementIndex; i++) {
         ptr++;
     }
-    cout << "ptr is initially pointing to " << (*ptr) << "\n";
+    // While loop is broken when digitsObtained == checkSize
     while (true) {
-        // Add data to the output
-        output << 1;
-        output += ((*ptr & binaryIndexor) > 1);
+        // Bitshift the output to make room for the next bit
+        *output = (uint32_t) *output << 1;
+        // Add the next bit by using a bitwise 'and' with the binaryIndexor
+        *output += ((*ptr & binaryIndexor) != 0);
         // Increment digitsObtained
         digitsObtained++;
+        // Check if the process is completed
         if (digitsObtained == checkSize) break;
-        // Increment counters related to binary stuff
+        // The second half of the while loop bitshifts the binaryIndexor
         binaryIndexor = (uint16_t) binaryIndexor >> 1;
+        // If the binaryIndexor is now 0, we have ran out of digits in this element
         if (binaryIndexor == 0) {
+            // Set the binaryIndexor to the start of the element
             binaryIndexor = (uint16_t) 1 << 15;
+            // Move to the next element within the array
             elementIndex++;
-            // If we have ran out of elements in this array, we'll need to use the next one
-            // I GUESS THIS SHOULD WORK THE SAME WAY IF THIS IS THE LAST ARRAY? BECAUSE THAT SHOULDN'T HAPPEN
+            // If we have ran out of elements in this array, use the next array
+            // Note: This code doesn't check that you are going out of bounds in any of the arrays, because that shouldn't happen anyway
             if (elementIndex == ARRAY_SIZE) {
+                // Move to the next array
                 pointerIndex++;
+                // Update the pointer
                 ptr = huffInput[pointerIndex];
             }
+            // If we haven't ran out of elements, just use the next element by incrementing the pointer
             else {
                 ptr++;
             }
         }
     }
-
-    printBin(output, checkSize);
-    cout << "\n";
-
 }
+
+#define VERBOSE 1
 
 void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* checkSize) {
     #ifdef VERBOSE
@@ -136,7 +131,7 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* check
     printBin(*bufferPointer, 64);
     cout << endl;
     printf( " bufferActive = %d\n", bufferActive);
-    cout << "   check size = " << *checkSize << endl;
+    printf("   check size = %d\n", *checkSize);
     cout << " --- Press enter --- ";
     cin.ignore();   // Wait for user to press enter
     #endif
@@ -147,8 +142,15 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* check
     while (checkSize - bufferActive >= 0) {
         // Check all the codes of this size
         for (uint16_t codeNumber = 0; codeNumber <= binCodeSizes[*checkSize]; codeNumber++) {
-            
+            // Idk, work your code magic in here or someth
+            exit(420420);
         }
+        // If it wasn't found, increase the checkSize
+        checkSize++;
+
+        printBin((uint64_t) *bufferPointer >> (bufferActive - *checkSize), 64);
+        printf("\n");
+        exit(420);
     }
 
 
@@ -181,10 +183,31 @@ void sendImage() {
 int main() {
     setup();
 
-    // sendImage();
+    sendImage();
 
 
-    getHuffInput(3, 6);
+
+    // getHuffInput(386, 14);
+    // cout << endl;
+    // getHuffInput(387, 14);
+    // cout << endl;
+
+    // getHuffInput(388, 14);
+    // cout << endl;
+
+    // uint32_t answer;
+    // for (unsigned char i = 0; i < maxBinCodeLen; i++) {
+    //     // if (i == 7) break;
+    //     for (unsigned short j = 0; j < binCodeSizes[i]; j++) {
+    //         getHuffInput(j, i + 1, &answer);
+    //         // printf("%d, %d -> ", i + 1, j);
+    //         // getHuffInput(j, i + 1);
+    //         printBin(answer, i + 1);
+    //         cout << endl;
+    //     }
+    // }
+
+    // getHuffInput(3, 6);
 
     // const unsigned char a = 1;
     // signed char b = 2;

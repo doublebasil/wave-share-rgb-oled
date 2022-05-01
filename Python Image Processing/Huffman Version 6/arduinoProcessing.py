@@ -160,6 +160,15 @@ def _writeHuffmanTable(file, huffmanTable):
             if newLineCounter == ELEMENTS_PER_LINE:
                 file.write("\n\t")
                 newLineCounter = 0
+    # If there is still data in the buffer, add a final byte
+    if len(writeBuffer) > 0:
+        # Make the writeBuffer 16 characters long
+        for i in range(0, 16 - len(writeBuffer)):
+            writeBuffer += "0"
+        # And write the writeBuffer to the file
+        newElement = hex(int(writeBuffer, 2))
+        while len(newElement) < 6: newElement = "0x0" + newElement[2:]
+        file.write(", " + newElement)
     # End last array
     file.write("};\n\n")
     # Create array of pointers
