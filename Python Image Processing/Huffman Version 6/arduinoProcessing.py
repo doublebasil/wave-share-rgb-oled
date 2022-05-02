@@ -92,7 +92,7 @@ def _writeHuffmanTable(file, huffmanTable):
     # --- Array 1 of 3 --- binCodeLenFreq
 
     # Add variable for length of array (this may need adjusting?)
-    file.write("uint16_t maxBinCodeLen = " + str(len(binCodeLenFreq)) + ";\n")
+    file.write("uint8_t maxBinCodeLen = " + str(len(binCodeLenFreq)) + ";\n")
     # Add frequency of each binary code size
     file.write("// Maybe in future change this to cumulative frequency\n")
     file.write("uint16_t binCodeSizes[] = {")

@@ -2169,7 +2169,7 @@ uint16_t* dataPointers[] = {
 uint16_t ENCODING_ARRAYS_USED = 152;
 // Arrays for Huffman table 
 
-uint16_t maxBinCodeLen = 14;
+uint8_t maxBinCodeLen = 14;
 // Maybe in future change this to cumulative frequency
 uint16_t binCodeSizes[] = {0, 0, 2, 1, 0, 4, 9, 33, 58, 117, 180, 268, 
 	174, 388};

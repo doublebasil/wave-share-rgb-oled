@@ -3,26 +3,33 @@
 #include <stdint.h>
 #include "image.h"
 
+/*
+Improvements (yes, there are many)
+- Make the getHuffInput more efficient by getting groups of binary digits
+  instead of getting the digits individually (and check for a speed difference afterwards)
+
+- You aren't very good at specifying which variables are pointers. Maybe add a _ptr to the
+  end of all pointer variables
+
+- This whole thing could benefit from being rewritten as a class
+
+- A codeNumber of 0 means the first element, but a checkSize of 1
+  means a code of width 1, feel like this is a bit inconsistent?
+
+- codeNumber should be renamed 'codeIndex' or something
+
+- Honestly just rewrite the whole damn thing
+*/
+
 using namespace std;
 
 void send(uint16_t data) {
-    cout << data << endl;
+    cout << hex << data << dec << endl;
 }
 
 void setup() {
     // cout << hex << endl;
 }
-
-// #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-// #define BYTE_TO_BINARY(byte)  \
-//     (byte & 0x80 ? '1' : '0'), \
-//     (byte & 0x40 ? '1' : '0'), \
-//     (byte & 0x20 ? '1' : '0'), \
-//     (byte & 0x10 ? '1' : '0'), \
-//     (byte & 0x08 ? '1' : '0'), \
-//     (byte & 0x04 ? '1' : '0'), \
-//     (byte & 0x02 ? '1' : '0'), \
-//     (byte & 0x01 ? '1' : '0')
 
 void printBin(uint64_t num, uint8_t bits) {
     uint64_t indexor = (uint64_t) 1 << (bits - 1);
@@ -43,22 +50,24 @@ void printBin(uint64_t num, uint8_t bits) {
     }
 }
 
-void getHuffInput(uint16_t codeNumber, uint8_t checkSize, uint32_t* output) {
+void getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     // If codeNumber = 6 and checkSize = 3, this function will return the 
     // 7th (6 + 1)th 'input code' with length of 3
     
     // Some error testing don't mind me
-    if (codeNumber >= binCodeSizes[checkSize-1]) {
+    if (*codeNumber >= binCodeSizes[checkSize-1]) {
         cout << "codeNumber looks to be invalid :/" << "\n";
         exit(1);
     }
+    // Reset output
+    *output = 0;
     // Find what binary digit we want to start at e.g. The code we want might start at the 76th binary digit
     uint32_t wantedDigit = 0;
     for (uint8_t index = 0; index < (checkSize - 1); index++) {
         wantedDigit += binCodeSizes[index] * (index + 1);
         // cout << binCodeSizes[index] << endl;
     }
-    wantedDigit += codeNumber * checkSize;
+    wantedDigit += *codeNumber * checkSize;
     wantedDigit++;
     // The data is stored in 16 bit elements within arrays
     uint16_t pointerIndex = 0;  // Which array is needed
@@ -122,15 +131,38 @@ void getHuffInput(uint16_t codeNumber, uint8_t checkSize, uint32_t* output) {
     }
 }
 
-#define VERBOSE 1
+void getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
+    // Use codeNumber and checkSize to find the 'absolute index' of the needed element
+    uint16_t elementIndex = 0;
+    for (int index = 0; checkSize - index - 1 > 0; index++) {
+        elementIndex += binCodeSizes[index];
+    }
+    elementIndex += *codeNumber;
+    // Find which array is needed
+    uint16_t arrayIndex = 0;
+    while (elementIndex >= ARRAY_SIZE) {
+        elementIndex -= ARRAY_SIZE;
+        arrayIndex++;
+    }
+    // Create a pointer that points to the start of the needed array
+    uint16_t* ptr = huffOutput[arrayIndex];
+    // Increment the pointer to the needed element
+    for (int i = 0; i < elementIndex; i++) {
+        ptr++;
+    }
+    // Set the value of the output pointer to the value pointed to by ptr
+    *output = *ptr;
+}
 
-void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* checkSize) {
+// #define VERBOSE 1
+
+void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize) {
     #ifdef VERBOSE
     cout << "       buffer = " << *bufferPointer << endl;
     cout << "       buffer = ";
     printBin(*bufferPointer, 64);
     cout << endl;
-    printf( " bufferActive = %d\n", bufferActive);
+    printf( " bufferActive = %d\n", *bufferActive);
     printf("   check size = %d\n", *checkSize);
     cout << " --- Press enter --- ";
     cin.ignore();   // Wait for user to press enter
@@ -138,22 +170,65 @@ void processBuffer(uint64_t* bufferPointer, uint8_t bufferActive, uint8_t* check
 
     // #include <brainf.h>
 
+    uint32_t code;
+    uint32_t bufferCopy;
+    bool foundCode;
+    uint16_t outputCode;
+
     // Keep increasing checkSize until it exceeds the bufferActive size
-    while (checkSize - bufferActive >= 0) {
-        // Check all the codes of this size
-        for (uint16_t codeNumber = 0; codeNumber <= binCodeSizes[*checkSize]; codeNumber++) {
-            // Idk, work your code magic in here or someth
-            exit(420420);
+    while (*bufferActive - *checkSize >= 0) {
+        // --- Turn bufferCopy into a binary indexor ---
+        bufferCopy = 0;
+        // Add a *checkSize 1s to bufferCopy
+        for (int i = 0; i < *checkSize; i++) {
+            bufferCopy = (uint32_t) bufferCopy << 1;
+            bufferCopy++;
         }
-        // If it wasn't found, increase the checkSize
-        checkSize++;
+        // Move the 1s to the start of the active buffer
+        bufferCopy = (uint32_t) bufferCopy << (*bufferActive - *checkSize);
+        // Use a bitwise & combined with a bitshift to get the required part of the buffer
+        bufferCopy = (uint32_t) (bufferCopy & *bufferPointer) >> (*bufferActive - *checkSize);
+        
+        // Variable to prevent checkSize being incremented if we did find a code
+        foundCode = false;
+        // Check all the codes of this checkSize
+        for (uint16_t codeNumber = 0; codeNumber < binCodeSizes[*checkSize - 1]; codeNumber++) {
+            getHuffInput(&codeNumber, *checkSize, &code);
 
-        printBin((uint64_t) *bufferPointer >> (bufferActive - *checkSize), 64);
-        printf("\n");
-        exit(420);
+            // Some verbose
+            #ifdef VERBOSE
+            printf("code   = ");
+            printBin(code, 32);
+            printf("\nbuffer = ");
+            printBin(bufferCopy, 32);
+            printf("\n---\n");
+            #endif
+
+            if (code == bufferCopy) {
+                // Found a correct code
+                #ifdef VERBOSE
+                printf("found code with: checkSize = %d, codeNumber = %d\n", *checkSize, codeNumber);
+                #endif
+                getHuffOutput(&codeNumber, *checkSize, &outputCode);
+                send(outputCode);
+                *bufferActive -= *checkSize;
+                *checkSize = 1;
+                foundCode = true;
+                break;
+            }
+
+        }
+        if (foundCode == false) {
+            // If it wasn't found, increase the checkSize
+            (*checkSize)++;
+        }
+
+        // Error checking, won't be needed in final version, because the program will be flawless
+        if (maxBinCodeLen + 1 - *checkSize == 0) {
+            printf("Couldn't find a valid code :( \n");
+            exit(420);
+        }
     }
-
-
 }
 
 void sendImage() {
@@ -172,7 +247,7 @@ void sendImage() {
             buffer += *dataPointer;
             bufferActive += 16;
             // Process the buffer NOTE: May also need a 'total pixels printed' kinda variable
-            processBuffer(&buffer, bufferActive, &checkSize);
+            processBuffer(&buffer, &bufferActive, &checkSize);
             // Increment the data pointer
             dataPointer++;
         }
@@ -185,7 +260,11 @@ int main() {
 
     sendImage();
 
-
+    // uint16_t output = 0;
+    // uint16_t codeNumber = 2;
+    // uint8_t checkSize = 7;
+    // getHuffOutput(&codeNumber, checkSize, &output);
+    // cout << hex << output << dec << endl;
 
     // getHuffInput(386, 14);
     // cout << endl;
