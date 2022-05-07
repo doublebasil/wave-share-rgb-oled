@@ -1,64 +1,29 @@
-#include <iostream>
-#include <stdio.h>
-#include <stdint.h>
+#include "ws_image.hpp"
+
 #include "image.h"
 
-/*
-Improvements (yes, there are many)
-- Make the getHuffInput more efficient by getting groups of binary digits
-  instead of getting the digits individually (and check for a speed difference afterwards)
+// protected members
 
-- You aren't very good at specifying which variables are pointers. Maybe add a _ptr to the
-  end of all pointer variables
-
-- This whole thing could benefit from being rewritten as a class
-
-- A codeNumber of 0 means the first element, but a checkSize of 1
-  means a code of width 1, feel like this is a bit inconsistent?
-
-- codeNumber should be renamed 'codeIndex' or something
-
-- Honestly just rewrite the whole damn thing
-*/
-
-using namespace std;
-
-void send(uint16_t data) {
-    cout << hex << data << dec << endl;
-}
-
-void setup() {
-    // cout << hex << endl;
-}
-
-void printBin(uint64_t num, uint8_t bits) {
-    uint64_t indexor = (uint64_t) 1 << (bits - 1);
-    // Counter to decide where to put spaces
-    uint8_t spaceCounter = bits % 4;
-    if (spaceCounter == 0) spaceCounter += 4;
-    spaceCounter++;
-    while (indexor > 0) {
-        // Check if space is needed
-        spaceCounter--;
-        if (spaceCounter == 0) {
-            spaceCounter = 4;
-            cout << " ";
-        }
-        // Print binary digit
-        cout << (num & indexor ? '1' : '0');
-        indexor = indexor >> 1;
+void WSImageSender::sendPixel(uint16_t* pixelData, uint16_t* x_ptr, uint16_t* y_ptr) {
+    // Some obvious pointer optimisation that can be done here
+    this->setPixel(*x_ptr, *y_ptr, *pixelData);
+    (*x_ptr)++;
+    if (displayWidth - *x_ptr == 0) {
+        (*x_ptr) = 0;
+        (*y_ptr)++;
     }
 }
 
-void getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
+void WSImageSender::getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     // If codeNumber = 6 and checkSize = 3, this function will return the 
     // 7th (6 + 1)th 'input code' with length of 3
     
-    // Some error testing don't mind me
-    if (*codeNumber >= binCodeSizes[checkSize-1]) {
-        cout << "codeNumber looks to be invalid :/" << "\n";
-        exit(1);
-    }
+    // // Some error testing don't mind me
+    // if (*codeNumber >= binCodeSizes[checkSize-1]) {
+    //     cout << "codeNumber looks to be invalid :/" << "\n";
+    //     exit(1);
+    // }
+
     // Reset output
     *output = 0;
     // Find what binary digit we want to start at e.g. The code we want might start at the 76th binary digit
@@ -131,7 +96,7 @@ void getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     }
 }
 
-void getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
+void WSImageSender::getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
     // Use codeNumber and checkSize to find the 'absolute index' of the needed element
     uint16_t elementIndex = 0;
     for (int index = 0; checkSize - index - 1 > 0; index++) {
@@ -154,22 +119,7 @@ void getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
     *output = *ptr;
 }
 
-// #define VERBOSE 1
-
-void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes) {
-    #ifdef VERBOSE
-    cout << "       buffer = " << *bufferPointer << endl;
-    cout << "       buffer = ";
-    printBin(*bufferPointer, 64);
-    cout << endl;
-    printf( " bufferActive = %d\n", *bufferActive);
-    printf("   check size = %d\n", *checkSize);
-    cout << " --- Press enter --- ";
-    cin.ignore();   // Wait for user to press enter
-    #endif
-
-    // #include <brainf.h>
-
+void WSImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes, uint16_t* x_ptr, uint16_t* y_ptr) {
     uint32_t code;
     uint32_t bufferCopy;
     bool foundCode;
@@ -195,49 +145,46 @@ void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* chec
         for (uint16_t codeNumber = 0; codeNumber < binCodeSizes[*checkSize - 1]; codeNumber++) {
             getHuffInput(&codeNumber, *checkSize, &code);
 
-            // Some verbose
-            #ifdef VERBOSE
-            printf("code   = ");
-            printBin(code, 32);
-            printf("\nbuffer = ");
-            printBin(bufferCopy, 32);
-            printf("\n---\n");
-            #endif
-
             if (code == bufferCopy) {
                 // Found a correct code
                 #ifdef VERBOSE
                 printf("found code with: checkSize = %d, codeNumber = %d\n", *checkSize, codeNumber);
                 #endif
                 getHuffOutput(&codeNumber, *checkSize, &outputCode);
-                send(outputCode);
+                sendPixel(&outputCode, x_ptr, y_ptr);
                 (*sentBytes)++;
                 *bufferActive -= *checkSize;
                 *checkSize = 1;
                 foundCode = true;
                 break;
             }
-
         }
         if (*sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) {
-            exit(99);
+            return;
         }
         if (foundCode == false) {
             // If it wasn't found, increase the checkSize
             (*checkSize)++;
         }
 
-        // Error checking, won't be needed in final version, because the program will be flawless
-        if (maxBinCodeLen + 1 - *checkSize == 0) {
-            printf("Couldn't find a valid code :( \n");
-            exit(420);
-        }
+        // // Error checking, won't be needed in final version, because the program will be flawless
+        // if (maxBinCodeLen + 1 - *checkSize == 0) 
+        // {
+        //     exit(420);
+        // }
     }
 }
 
-void sendImage() {
+// public members
+
+WSImageSender::WSImageSender() {}
+
+int WSImageSender::sendImage() {
     // Variable to know how many bytes have been sent
     uint32_t sentBytes = 0;
+    // Variables to know where to send the next pixel
+    uint16_t x = 0;
+    uint16_t y = 0;
     // Initialise buffer related variables
     uint64_t buffer = 0;
     uint8_t checkSize = 1;
@@ -253,79 +200,14 @@ void sendImage() {
             buffer += *dataPointer;
             bufferActive += 16;
             // Process the buffer NOTE: May also need a 'total pixels printed' kinda variable
-            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes);
+            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes, &x, &y);
             // Increment the data pointer
             dataPointer++;
+            // Check if all pixels have been found
+            if (sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) { // Not sure how I feel about the header files dimensions being used here instead of the objects
+                return 0;
+            }
         }
     }
-
-}
-
-int main() {
-    setup();
-
-    sendImage();
-
-    // uint16_t output = 0;
-    // uint16_t codeNumber = 2;
-    // uint8_t checkSize = 7;
-    // getHuffOutput(&codeNumber, checkSize, &output);
-    // cout << hex << output << dec << endl;
-
-    // getHuffInput(386, 14);
-    // cout << endl;
-    // getHuffInput(387, 14);
-    // cout << endl;
-
-    // getHuffInput(388, 14);
-    // cout << endl;
-
-    // uint32_t answer;
-    // for (unsigned char i = 0; i < maxBinCodeLen; i++) {
-    //     // if (i == 7) break;
-    //     for (unsigned short j = 0; j < binCodeSizes[i]; j++) {
-    //         getHuffInput(j, i + 1, &answer);
-    //         // printf("%d, %d -> ", i + 1, j);
-    //         // getHuffInput(j, i + 1);
-    //         printBin(answer, i + 1);
-    //         cout << endl;
-    //     }
-    // }
-
-    // getHuffInput(3, 6);
-
-    // const unsigned char a = 1;
-    // signed char b = 2;
-    // if (a == b) {
-    //     cout << "yes" << endl;
-    // } else {
-    //     cout << "no" << endl;
-    // }
-    
-    // printBin(43690, 16);
-    // cout << endl;
-    // printBin(43690, 64);
-    // cout << endl;
-
-    // // binary print test
-    // printBin(0b111100001010, 12);
-    // printf("\n");
-    // printBin(0b0111100001010, 13);
-    // printf("\n");
-    // printBin(0b10111100001010, 14);
-    // printf("\n");
-    // printBin(0b110111100001010, 15);
-    // printf("\n");
-    // printBin(0b0110111100001010, 16);
-    // printf("\n");
-
-    // // test
-    // uint64_t buffer = 0b01011;
-    // uint8_t bufferActive = 5;
-    // uint16_t newData = 0b1111000011111111;
-    // buffer = buffer << 16;
-    // buffer += newData;
-    // cout << buffer << endl;
-
     return 0;
 }

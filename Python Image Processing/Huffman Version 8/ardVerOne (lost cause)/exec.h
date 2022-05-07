@@ -1,7 +1,8 @@
-#include <iostream>
-#include <stdio.h>
+// #include <iostream>
+// #include <stdio.h>
 #include <stdint.h>
 #include "image.h"
+#include "oled_code.h"
 
 /*
 Improvements (yes, there are many)
@@ -23,32 +24,32 @@ Improvements (yes, there are many)
 
 using namespace std;
 
-void send(uint16_t data) {
-    cout << hex << data << dec << endl;
+void send(uint16_t data, WaveShareOled) {
+//    cout << hex << data << dec << endl;
 }
 
-void setup() {
-    // cout << hex << endl;
-}
+// void setup() {
+//     // cout << hex << endl;
+// }
 
-void printBin(uint64_t num, uint8_t bits) {
-    uint64_t indexor = (uint64_t) 1 << (bits - 1);
-    // Counter to decide where to put spaces
-    uint8_t spaceCounter = bits % 4;
-    if (spaceCounter == 0) spaceCounter += 4;
-    spaceCounter++;
-    while (indexor > 0) {
-        // Check if space is needed
-        spaceCounter--;
-        if (spaceCounter == 0) {
-            spaceCounter = 4;
-            cout << " ";
-        }
-        // Print binary digit
-        cout << (num & indexor ? '1' : '0');
-        indexor = indexor >> 1;
-    }
-}
+// void printBin(uint64_t num, uint8_t bits) {
+//     uint64_t indexor = (uint64_t) 1 << (bits - 1);
+//     // Counter to decide where to put spaces
+//     uint8_t spaceCounter = bits % 4;
+//     if (spaceCounter == 0) spaceCounter += 4;
+//     spaceCounter++;
+//     while (indexor > 0) {
+//         // Check if space is needed
+//         spaceCounter--;
+//         if (spaceCounter == 0) {
+//             spaceCounter = 4;
+//             cout << " ";
+//         }
+//         // Print binary digit
+//         cout << (num & indexor ? '1' : '0');
+//         indexor = indexor >> 1;
+//     }
+// }
 
 void getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     // If codeNumber = 6 and checkSize = 3, this function will return the 
@@ -56,7 +57,7 @@ void getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     
     // Some error testing don't mind me
     if (*codeNumber >= binCodeSizes[checkSize-1]) {
-        cout << "codeNumber looks to be invalid :/" << "\n";
+        // cout << "codeNumber looks to be invalid :/" << "\n";
         exit(1);
     }
     // Reset output
@@ -156,17 +157,17 @@ void getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
 
 // #define VERBOSE 1
 
-void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes) {
-    #ifdef VERBOSE
-    cout << "       buffer = " << *bufferPointer << endl;
-    cout << "       buffer = ";
-    printBin(*bufferPointer, 64);
-    cout << endl;
-    printf( " bufferActive = %d\n", *bufferActive);
-    printf("   check size = %d\n", *checkSize);
-    cout << " --- Press enter --- ";
-    cin.ignore();   // Wait for user to press enter
-    #endif
+void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes, WaveShareOled oledObj) {
+    // #ifdef VERBOSE
+    // cout << "       buffer = " << *bufferPointer << endl;
+    // cout << "       buffer = ";
+    // printBin(*bufferPointer, 64);
+    // cout << endl;
+    // printf( " bufferActive = %d\n", *bufferActive);
+    // printf("   check size = %d\n", *checkSize);
+    // cout << " --- Press enter --- ";
+    // cin.ignore();   // Wait for user to press enter
+    // #endif
 
     // #include <brainf.h>
 
@@ -196,21 +197,21 @@ void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* chec
             getHuffInput(&codeNumber, *checkSize, &code);
 
             // Some verbose
-            #ifdef VERBOSE
-            printf("code   = ");
-            printBin(code, 32);
-            printf("\nbuffer = ");
-            printBin(bufferCopy, 32);
-            printf("\n---\n");
-            #endif
+            // #ifdef VERBOSE
+            // printf("code   = ");
+            // printBin(code, 32);
+            // printf("\nbuffer = ");
+            // printBin(bufferCopy, 32);
+            // printf("\n---\n");
+            // #endif
 
             if (code == bufferCopy) {
                 // Found a correct code
-                #ifdef VERBOSE
-                printf("found code with: checkSize = %d, codeNumber = %d\n", *checkSize, codeNumber);
-                #endif
+                // #ifdef VERBOSE
+                // printf("found code with: checkSize = %d, codeNumber = %d\n", *checkSize, codeNumber);
+                // #endif
                 getHuffOutput(&codeNumber, *checkSize, &outputCode);
-                send(outputCode);
+                send(outputCode, oledObj);
                 (*sentBytes)++;
                 *bufferActive -= *checkSize;
                 *checkSize = 1;
@@ -220,7 +221,7 @@ void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* chec
 
         }
         if (*sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) {
-            exit(99);
+            break;
         }
         if (foundCode == false) {
             // If it wasn't found, increase the checkSize
@@ -235,7 +236,7 @@ void processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* chec
     }
 }
 
-void sendImage() {
+void sendImage(WaveShareOled oledObj) {
     // Variable to know how many bytes have been sent
     uint32_t sentBytes = 0;
     // Initialise buffer related variables
@@ -248,12 +249,16 @@ void sendImage() {
         uint16_t *dataPointer = dataPointers[pointerNumber];
         // Increment this pointer to get all data from this array
         for (uint16_t arrayPosition = 0; arrayPosition <= ARRAY_SIZE - 1; arrayPosition++) {
+            // Break if necessary
+            if (sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) {
+                break;
+            }
             // Add the next two bytes to the buffer
             buffer = (uint64_t) buffer << 16;
             buffer += *dataPointer;
             bufferActive += 16;
             // Process the buffer NOTE: May also need a 'total pixels printed' kinda variable
-            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes);
+            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes, oledObj);
             // Increment the data pointer
             dataPointer++;
         }
@@ -261,71 +266,71 @@ void sendImage() {
 
 }
 
-int main() {
-    setup();
+// int main() {
+//     setup();
 
-    sendImage();
+//     sendImage();
 
-    // uint16_t output = 0;
-    // uint16_t codeNumber = 2;
-    // uint8_t checkSize = 7;
-    // getHuffOutput(&codeNumber, checkSize, &output);
-    // cout << hex << output << dec << endl;
+//     // uint16_t output = 0;
+//     // uint16_t codeNumber = 2;
+//     // uint8_t checkSize = 7;
+//     // getHuffOutput(&codeNumber, checkSize, &output);
+//     // cout << hex << output << dec << endl;
 
-    // getHuffInput(386, 14);
-    // cout << endl;
-    // getHuffInput(387, 14);
-    // cout << endl;
+//     // getHuffInput(386, 14);
+//     // cout << endl;
+//     // getHuffInput(387, 14);
+//     // cout << endl;
 
-    // getHuffInput(388, 14);
-    // cout << endl;
+//     // getHuffInput(388, 14);
+//     // cout << endl;
 
-    // uint32_t answer;
-    // for (unsigned char i = 0; i < maxBinCodeLen; i++) {
-    //     // if (i == 7) break;
-    //     for (unsigned short j = 0; j < binCodeSizes[i]; j++) {
-    //         getHuffInput(j, i + 1, &answer);
-    //         // printf("%d, %d -> ", i + 1, j);
-    //         // getHuffInput(j, i + 1);
-    //         printBin(answer, i + 1);
-    //         cout << endl;
-    //     }
-    // }
+//     // uint32_t answer;
+//     // for (unsigned char i = 0; i < maxBinCodeLen; i++) {
+//     //     // if (i == 7) break;
+//     //     for (unsigned short j = 0; j < binCodeSizes[i]; j++) {
+//     //         getHuffInput(j, i + 1, &answer);
+//     //         // printf("%d, %d -> ", i + 1, j);
+//     //         // getHuffInput(j, i + 1);
+//     //         printBin(answer, i + 1);
+//     //         cout << endl;
+//     //     }
+//     // }
 
-    // getHuffInput(3, 6);
+//     // getHuffInput(3, 6);
 
-    // const unsigned char a = 1;
-    // signed char b = 2;
-    // if (a == b) {
-    //     cout << "yes" << endl;
-    // } else {
-    //     cout << "no" << endl;
-    // }
+//     // const unsigned char a = 1;
+//     // signed char b = 2;
+//     // if (a == b) {
+//     //     cout << "yes" << endl;
+//     // } else {
+//     //     cout << "no" << endl;
+//     // }
     
-    // printBin(43690, 16);
-    // cout << endl;
-    // printBin(43690, 64);
-    // cout << endl;
+//     // printBin(43690, 16);
+//     // cout << endl;
+//     // printBin(43690, 64);
+//     // cout << endl;
 
-    // // binary print test
-    // printBin(0b111100001010, 12);
-    // printf("\n");
-    // printBin(0b0111100001010, 13);
-    // printf("\n");
-    // printBin(0b10111100001010, 14);
-    // printf("\n");
-    // printBin(0b110111100001010, 15);
-    // printf("\n");
-    // printBin(0b0110111100001010, 16);
-    // printf("\n");
+//     // // binary print test
+//     // printBin(0b111100001010, 12);
+//     // printf("\n");
+//     // printBin(0b0111100001010, 13);
+//     // printf("\n");
+//     // printBin(0b10111100001010, 14);
+//     // printf("\n");
+//     // printBin(0b110111100001010, 15);
+//     // printf("\n");
+//     // printBin(0b0110111100001010, 16);
+//     // printf("\n");
 
-    // // test
-    // uint64_t buffer = 0b01011;
-    // uint8_t bufferActive = 5;
-    // uint16_t newData = 0b1111000011111111;
-    // buffer = buffer << 16;
-    // buffer += newData;
-    // cout << buffer << endl;
+//     // // test
+//     // uint64_t buffer = 0b01011;
+//     // uint8_t bufferActive = 5;
+//     // uint16_t newData = 0b1111000011111111;
+//     // buffer = buffer << 16;
+//     // buffer += newData;
+//     // cout << buffer << endl;
 
-    return 0;
-}
+//     return 0;
+// }

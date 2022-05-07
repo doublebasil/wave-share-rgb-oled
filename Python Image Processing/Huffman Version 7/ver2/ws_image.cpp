@@ -1,6 +1,20 @@
-#include "exec2.hpp"
+#include "ws_image.hpp"
 
-void ImageSender::getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
+#include "image.h"
+
+// protected members
+
+void WSImageSender::sendPixel(uint16_t* pixelData, uint16_t* x_ptr, uint16_t* y_ptr) {
+    // Some obvious pointer optimisation that can be done here
+    this->setPixel(*x_ptr, *y_ptr, *pixelData);
+    (*x_ptr)++;
+    if (displayWidth - *x_ptr == 0) {
+        (*x_ptr) = 0;
+        (*y_ptr)++;
+    }
+}
+
+void WSImageSender::getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t* output) {
     // If codeNumber = 6 and checkSize = 3, this function will return the 
     // 7th (6 + 1)th 'input code' with length of 3
     
@@ -82,7 +96,7 @@ void ImageSender::getHuffInput(uint16_t* codeNumber, uint8_t checkSize, uint32_t
     }
 }
 
-void ImageSender::getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
+void WSImageSender::getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_t* output) {
     // Use codeNumber and checkSize to find the 'absolute index' of the needed element
     uint16_t elementIndex = 0;
     for (int index = 0; checkSize - index - 1 > 0; index++) {
@@ -105,21 +119,18 @@ void ImageSender::getHuffOutput(uint16_t* codeNumber, uint8_t checkSize, uint16_
     *output = *ptr;
 }
 
-void ImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes) 
-{
+void WSImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, uint8_t* checkSize, uint32_t* sentBytes, uint16_t* x_ptr, uint16_t* y_ptr) {
     uint32_t code;
     uint32_t bufferCopy;
     bool foundCode;
     uint16_t outputCode;
 
     // Keep increasing checkSize until it exceeds the bufferActive size
-    while (*bufferActive - *checkSize >= 0) 
-    {
+    while (*bufferActive - *checkSize >= 0) {
         // --- Turn bufferCopy into a binary indexor ---
         bufferCopy = 0;
         // Add a *checkSize 1s to bufferCopy
-        for (int i = 0; i < *checkSize; i++) 
-        {
+        for (int i = 0; i < *checkSize; i++) {
             bufferCopy = (uint32_t) bufferCopy << 1;
             bufferCopy++;
         }
@@ -131,8 +142,7 @@ void ImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, 
         // Variable to prevent checkSize being incremented if we did find a code
         foundCode = false;
         // Check all the codes of this checkSize
-        for (uint16_t codeNumber = 0; codeNumber < binCodeSizes[*checkSize - 1]; codeNumber++) 
-        {
+        for (uint16_t codeNumber = 0; codeNumber < binCodeSizes[*checkSize - 1]; codeNumber++) {
             getHuffInput(&codeNumber, *checkSize, &code);
 
             if (code == bufferCopy) {
@@ -141,17 +151,16 @@ void ImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, 
                 printf("found code with: checkSize = %d, codeNumber = %d\n", *checkSize, codeNumber);
                 #endif
                 getHuffOutput(&codeNumber, *checkSize, &outputCode);
-                sendIT(outputCode);
+                sendPixel(&outputCode, x_ptr, y_ptr);
                 (*sentBytes)++;
                 *bufferActive -= *checkSize;
                 *checkSize = 1;
                 foundCode = true;
                 break;
             }
-
         }
         if (*sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) {
-            exit(99); // need to do something about this
+            return;
         }
         if (foundCode == false) {
             // If it wasn't found, increase the checkSize
@@ -166,32 +175,39 @@ void ImageSender::processBuffer(uint64_t* bufferPointer, uint8_t* bufferActive, 
     }
 }
 
-int ImageSender::send() 
-{
+// public members
+
+WSImageSender::WSImageSender() {}
+
+int WSImageSender::sendImage() {
     // Variable to know how many bytes have been sent
     uint32_t sentBytes = 0;
+    // Variables to know where to send the next pixel
+    uint16_t x = 0;
+    uint16_t y = 0;
     // Initialise buffer related variables
     uint64_t buffer = 0;
     uint8_t checkSize = 1;
     // Variable to note how many bits of the buffer are currently in use
     uint8_t bufferActive = 0;
     // For each pointer in the encoded pointer array
-    for (uint16_t pointerNumber = 0; pointerNumber <= ENCODING_ARRAYS_USED; pointerNumber++) 
-    {
+    for (uint16_t pointerNumber = 0; pointerNumber <= ENCODING_ARRAYS_USED; pointerNumber++) {
         uint16_t *dataPointer = dataPointers[pointerNumber];
         // Increment this pointer to get all data from this array
-        for (uint16_t arrayPosition = 0; arrayPosition <= ARRAY_SIZE - 1; arrayPosition++) 
-        {
+        for (uint16_t arrayPosition = 0; arrayPosition <= ARRAY_SIZE - 1; arrayPosition++) {
             // Add the next two bytes to the buffer
             buffer = (uint64_t) buffer << 16;
             buffer += *dataPointer;
             bufferActive += 16;
             // Process the buffer NOTE: May also need a 'total pixels printed' kinda variable
-            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes);
+            processBuffer(&buffer, &bufferActive, &checkSize, &sentBytes, &x, &y);
             // Increment the data pointer
             dataPointer++;
+            // Check if all pixels have been found
+            if (sentBytes == ((uint32_t) DISPLAY_HEIGHT * DISPLAY_WIDTH)) { // Not sure how I feel about the header files dimensions being used here instead of the objects
+                return 0;
+            }
         }
     }
     return 0;
 }
-

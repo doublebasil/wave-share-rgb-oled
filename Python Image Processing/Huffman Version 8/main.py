@@ -1,7 +1,7 @@
-import huffman
-import imageProcessing
-import arduinoProcessing
-import txtGenerator
+from py import huffman
+from py import imageProcessing
+from py import arduinoProcessing
+from py import txtGenerator
 
 def main():
     # imageData = imageProcessing.getImageData()
@@ -40,8 +40,9 @@ def main():
     if displayHeight <= 0:
         exit("\nError - invalid display width")
     imageData = imageProcessing.getImageData(displayWidth, displayHeight)
+    # -- for some temporary testing
     print(imageData)
-    exit()
+    # --
     print("Raw image uses " + str(len(imageData) * 2) + " bytes")
     hTable = huffman.createTable(imageData)
     print("Encoding image...")

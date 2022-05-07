@@ -258,7 +258,6 @@ void sendImage() {
             dataPointer++;
         }
     }
-
 }
 
 int main() {
