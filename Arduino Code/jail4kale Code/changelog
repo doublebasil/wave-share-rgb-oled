@@ -5,3 +5,6 @@ V3 - Realised classes are a good idea but I did some big noob stuff
 V4 - Trying to learn how the color works so I can send an actual image to the
      screen
 V5 - Trying to display an image on the screen using a header file
+(Wow, how naive)
+V6 - In Arduino SPI Library, setDataMode, serBitOrder and setClockDivider
+are depreciated. Attempting to use SPISettings instead

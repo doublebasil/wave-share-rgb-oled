@@ -61,9 +61,10 @@ int WaveShareOled::begin(char CS, char DC, char RST, uint16_t displayWidth, uint
     #endif
 
     // SPI setup
-    SPI.setDataMode(SPI_MODE3);
-    SPI.setBitOrder(MSBFIRST);
-    SPI.setClockDivider(SPI_CLOCK_DIV2);
+//    SPI.setDataMode(SPI_MODE3);
+//    SPI.setBitOrder(MSBFIRST);
+//    SPI.setClockDivider(SPI_CLOCK_DIV2);
+    SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE3));
     SPI.begin();
 
     // Set object variable values to constructor args
