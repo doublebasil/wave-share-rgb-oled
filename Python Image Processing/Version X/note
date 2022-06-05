@@ -1,0 +1,4 @@
+In Version 9, I'm back to fix the mess I left about a month ago
+
+The Python file needs to be modified to get rid of the useless pointer arrays
+The Python file also now needs to write the an SD card, as I will need to store lots of info there. Firstly, I'm going to get the SD card working

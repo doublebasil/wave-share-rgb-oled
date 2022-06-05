@@ -1,0 +1,60 @@
+[3 digits: display height]
+[3 digits: display width]
+[imagedata]
+
+!Scrap some of the things below!
+
+I'm going to create a 'custom' file type.
+This is a complex way for me to get around my coding incompetence
+
+
+Things the file will need:
+- display width and height
+- the encoded data
+- the table input codes (in variable length binary)
+- the frequency of each length of input code to the table
+- the outputs for the table
+* the position of each of these block of data!
+
+* is the only thing that must have a fixed position and size
+
+We can use values 32 to 126 in the ascii table, giving us 94
+values per character within the file
+
+However I want blocks of characters to align to blocks of
+bytes. I'll only use 64 characters of ascii, so one character
+will be equivalent to 6 binary digits.
+This way, 3 bytes of data will be represented by 4 base64 characters.
+
+TAKE THAT BACK
+bytes are sent in twos. So I'll use 6 bytes (3 words) represented by 8 characters
+
+File format will be:
+(Note: Code won't have any newlines, except for at the very end?)
+------
+[3 digits: Display Width]
+[3 digits: Display Height]
+[2 digits: The length of the longest table input code]
+[5 digits: Start position of encoded data]
+[5 digits: Start position of table input codes]
+[5 digits: Start position of table output bytes]
+[3*n digits, The frequencies of each table length, each frequency being 3 digits]
+[Encoded data]
+[Table input codes]
+[Table output bytes]
+
+------
+My rambling thought process (don't need to read)
+
+It may be worth only using 64 characters, so that blocks of
+characters will align with the blocks of bytes.
+After some math, turns out that wont align very well either,
+we'd need 2.667 base 64 digits to represent 16 binary bits
+I'm gonna try base 94 for now
+
+On second thought, base 94 would be a nightmare. We'd need
+to load e.g. 50 bytes of data at a time, how tf am I going
+to know where a byte ends
+A base 64 digit is like 6 binary bits
+So 3 bytes of data can be represented by 4 base 64 digits
+-------
