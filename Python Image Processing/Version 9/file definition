@@ -24,7 +24,7 @@ TAKE THAT BACK
 bytes are sent in twos. So I'll use 6 bytes represented by 8 charactes
 
 File format will be:
-(Note: Code won't have any newlines, except for at the very end)
+(Note: Code won't have any newlines, except for at the very end?)
 ------
 [3 digits: Display Width]
 [3 digits: Display Height]
